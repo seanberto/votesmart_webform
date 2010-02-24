@@ -128,9 +128,7 @@ function votesmart_webform_is_zip($zip)
 
 function votesmart_webform_get_candidate($candidateId)
 {
-  //sanity check
-  if( !is_numeric($candidateId) ) return array();
-
+  
   $candidateId.='';//convert to string
 
   static $candidates;
@@ -142,15 +140,16 @@ function votesmart_webform_get_candidate($candidateId)
     $candidates[$candidateId] = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
   }
 
-  return $contacts[$candidateId];
+  return $candidates[$candidateId];
 }
 
 function votesmart_webform_get_candidate_name($candidateId)
 {
   $c = votesmart_webform_get_candidate($candidateId);
-  print_r($c);
+  $c = $c['candidate'];
 
   $name = array();
+  $name[] = $c->title;
   $name[] = $c->firstName;
   if( !empty($c->middleName) )
     $name[] = $c->middleName;
@@ -170,7 +169,7 @@ function votesmart_webform_get_candidate_email($candidateId)
   if( !isset($c->address) ) return false;
 
   $email = false;
-  foreach($c->address as $addr)
+  foreach($c['address'] as $addr)
   {
     if( $addr->webAddressType == 'Email' )
     {
@@ -197,9 +196,8 @@ function votesmart_webform_get_candidate_options($zip)
   $options = array();//options to return
   foreach($candidates as $c)
   {
-    die(print_r(votesmart_webform_get_candidate($c->candidateId),1));
-    //$name = votesmart_get_candidate_name($c->candidateId);
-    //$email = votesmart_get_candidate_email($cid);
+    $name = votesmart_webform_get_candidate_name($c->candidateId);
+    $email = votesmart_webform_get_candidate_email($c->candidateId);
     if( $email )
       $name.= '*';
 
