@@ -1,0 +1,211 @@
+<?php
+function votesmart_webform_menu()
+{
+  $items = array();
+
+  // Admin Settings.
+  $items['admin/settings/votesmart_webform'] = array(
+    'title' => 'Vote Smart Webform',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('votesmart_webform_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Configuration for Vote Smart webform.',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['votesmart_webform/test'] = array(
+    'title' => 'Vote Smart Test',
+    'page callback' => 'votesmart_webform_test',
+    'access arguments' => array(),
+    'type' => MENU_NORMAL_ITEM
+  );
+
+  return $items;
+}
+
+function votesmart_webform_webform_component_info() {
+  $components = array();
+
+  //component was originally called votesmart_webform,
+  //but it was too long? m got chopped off.
+  $components['votesmart'] = array(
+    'label' => t('Vote Smart Lookup'),
+    'description' => t('Looks up Representative for Given Zip Code'),
+    'features' => array(
+      'csv' => FALSE,
+      'email' => FALSE,
+      'required' => TRUE,
+      'conditonal' => FALSE,
+    ),
+    'file' => 'votesmart_webform.webform.inc'
+  );
+
+  return $components;
+}
+
+
+function votesmart_webform_test()
+{
+  $candidates = _votesmart_webform_api('Officials.getByZip',array('zip5' => '27511'),'candidate');
+  $candidate_contact_info = array();
+  $first = true;
+  foreach($candidates as $candidate)
+  {
+//    if( !$first ) break;
+//    if( $first ) $first = false;
+    $cid = $candidate->candidateId; //alias
+    $contact_info = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$cid));
+    $candidate_contact_info[] = $contact_info;
+  }
+  dpr($candidate_contact_info);
+  return '';
+}
+
+/**
+ * Uses same settings and keys as votesmart module
+ */
+function votesmart_webform_admin_settings() {
+  $form = array();
+  $form['api'] = array(
+    '#type' => 'fieldset',
+    '#title' => ('API Settings')
+  );
+  $form['api']['votesmart_host'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Votesmart API server'),
+    '#description' => t(''),
+    '#default_value' => variable_get('votesmart_host', 'http://api.votesmart.org/'),
+  );
+  $form['api']['votesmart_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Votesmart API key'),
+    '#description' => '<a href="http://www.votesmart.org/user_register.php">'.t('Register for Key').'</a>',
+    '#default_value' => variable_get('votesmart_key', ''),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Same Request function used by votesmart module
+ */
+function _votesmart_webform_api($request, $args = array(), $item = null) {
+  $key = variable_get('votesmart_key', '');
+  $url = variable_get('votesmart_host', 'http://api.votesmart.org/');
+
+  // Convert arguments into a request string.
+  $args = array_merge($args, array('key' => $key));
+  $url .= $request . '?';
+  foreach ($args as $k => $v) {
+    $url .= check_plain($k) . '=' . check_plain($v) . '&';;
+  }
+
+  // Contact the REST API.
+  $res = drupal_http_request($url);
+  $ret = (array) new SimpleXMLElement($res->data, LIBXML_NOCDATA);
+
+  // TODO check $ret['errorMessage']
+  if (isset($ret['errorMessage'])) {
+    drupal_set_message(t('Vote Smart API error: %err', array('%err' => $ret['errorMessage'])), 'error');
+  }
+
+  // Return specified element (e.g. 'details', 'list', etc.);
+  if ($item) {
+    foreach (explode('.', $item) as $key) {
+      $ret = (array) $ret[$key];
+    }
+  }
+
+  // Nothing specified, return the entire object.
+  return $ret;
+}
+
+function votesmart_webform_is_zip($zip)
+{
+  return preg_match('/^[0-9]{5}([- ]?[0-9]{4})?$/', $zip);
+}
+
+function votesmart_webform_get_candidate($candidateId)
+{
+  //sanity check
+  if( !is_numeric($candidateId) ) return array();
+
+  $candidateId.='';//convert to string
+
+  static $candidates;
+  if( !isset($candidates) )
+    $candidates = array();
+
+  if( !isset($candidates[$candidateId]) )
+  {
+    $candidates[$candidateId] = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
+  }
+
+  return $contacts[$candidateId];
+}
+
+function votesmart_webform_get_candidate_name($candidateId)
+{
+  $c = votesmart_webform_get_candidate($candidateId);
+  print_r($c);
+
+  $name = array();
+  $name[] = $c->firstName;
+  if( !empty($c->middleName) )
+    $name[] = $c->middleName;
+  if( !empty($c->nickName) )
+    $name[] = '"'.$c->nickName.'"';
+  $name[] = $c->lastName;
+  $name = implode(' ',$name);
+
+  return $name;
+}
+
+function votesmart_webform_get_candidate_email($candidateId)
+{
+
+  $c = votesmart_webform_get_candidate($candidateId);
+
+  if( !isset($c->address) ) return false;
+
+  $email = false;
+  foreach($c->address as $addr)
+  {
+    if( $addr->webAddressType == 'Email' )
+    {
+      $email = $addr->webAddress;
+      break;
+    }
+  }
+
+  return $email;
+}
+
+function votesmart_webform_get_candidate_options($zip)
+{
+  if( !votesmart_webform_is_zip($zip) ) return array();
+
+  $zip = preg_replace('@[^\d]@','',$zip);//trip non digits
+
+  $args = array('zip5' => substr($zip,0,5) );
+  if( strlen($zip) == 9 )
+    $args['zip4'] = substr($zip,5,9);
+
+  $candidates = _votesmart_webform_api('Officials.getByZip',$args,'candidate');
+
+  $options = array();//options to return
+  foreach($candidates as $c)
+  {
+    die(print_r(votesmart_webform_get_candidate($c->candidateId),1));
+    //$name = votesmart_get_candidate_name($c->candidateId);
+    //$email = votesmart_get_candidate_email($cid);
+    if( $email )
+      $name.= '*';
+
+    $options[$c->candidateId.''] = "$name";
+  }
+  return $options;
+}
+
+?>
