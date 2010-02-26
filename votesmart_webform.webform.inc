@@ -14,8 +14,20 @@ function _webform_defaults_votesmart() {
     'extra' => array(
       'width' => '',
       'attributes' => array(),
+      'name_format' => '%last, %first'
     )
   );
+}
+
+function _votesmart_webform_format_name($candidate,$format = '%title %last, %first')
+{
+  return t($format,array(
+    '%title' => $candidate['title'],
+    '%first' => $candidate['firstName'],
+    '%last' =>  $candidate['lastName'],
+    '%middle' => $candidate['middleName'],
+    '%nick' => $candidate['nickName']
+  ));
 }
 
 /**
@@ -32,8 +44,16 @@ function _webform_edit_votesmart($component) {
     '#type' => 'textfield',
     '#title' => t('Specify Default Zip'),
     '#weight' => 0,
+    '#default_value' => $component['extra']['zip'],
     '#element_validate' => array('_webform_edit_votesmart_default_zip_validate'),
   );
+
+  $form['extra']['name_format'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Candidate Name Format'),
+    '#weight' => 0,
+    '#description' => t('valid tokens include: %title %first %middle %last %nick'),
+    '#default_value' => $component['extra']['name_format'] ? $component['extra']['name_format'] : '%title %last, %first');
 
   $form['extra']['width'] = array(
     '#type' => 'textfield',
@@ -64,48 +84,6 @@ function _webform_edit_votesmart_default_zip_validate($zip_element, &$form_state
 }
 
 /**
- * Define the component to structure to hook_form_builder_types().
- */
-function _webform_form_builder_types_votesmart() {
-  $fields = array();
-
-  $fields['votesmart_webform_zip'] = array(
-    'title' => t('Zip'),
-    'properties' => array(
-      'title',
-      'description',
-      'required',
-      'size',
-      'key'
-    ),
-    'default' => array(
-      '#title' => t('Zip'),
-      '#type' => 'textfield',
-      '#size' => 9,
-      '#required' => true
-    ),
-  );
-
-  $fields['votesmart_webform_candidates'] = array(
-    'title' => t('Candidates'),
-    'properties' => array(
-      'title',
-      'description',
-      'required',
-      'size',
-      'key'
-    ),
-    'default' => array(
-      '#title' => t('Candidates'),
-      '#type' => 'textfield',
-    ),
-  );
-
-
-  return $fields;
-}
-
-/**
  * Render a Webform component to be part of a form.
  *
  * @param $component
@@ -117,12 +95,11 @@ function _webform_form_builder_types_votesmart() {
  *   each value saved in this field.
  */
 function _webform_render_votesmart($component, $value = NULL) {
-  kpr($component);
-  kpr($value);
+  $dom_id = 'webform-component-'.$component['form_key'];
   $form = array(
-    '#prefix' => '<div id="webform-component-'.$component['form_key'].'" class="webform-component-votesmart">',
+    '#prefix' => '<div id="'.$dom_id.'" class="webform-component-votesmart">',
     'votesmart' => array(),
-    '#suffix' => '</div><!--/.webform-component-votesmart-->'
+    '#suffix' => '</div><!--/#'.$dom_id.' .webform-component-votesmart-->'
   );
   $form['votesmart']['zip'] = array(
     '#type' => 'textfield',
@@ -130,12 +107,16 @@ function _webform_render_votesmart($component, $value = NULL) {
     '#required' => TRUE,
     '#weight' => $component['weight'],
     '#description'   => _webform_filter_descriptions($component['extra']['description']),
+    '#ahah' => array(
+      'event' => 'change',
+      'wrapper' => $dom_id,
+      'path' => 'votesmart_webform/ahah/zip_changed',
+      'progress'=>array('type'=> 'throbber')
+
+    )
   );
 
   $form['votesmart']['candidates'] = array(
-    '#title' => t('Candidates'),
-    '#type' => 'select',
-    '#multiple' => true,
     '#weight' => $component['weight']+1
   );
 
@@ -146,13 +127,47 @@ function _webform_render_votesmart($component, $value = NULL) {
     $form['votesmart']['zip']['#default_value'] = $component['extra']['zip'];
   }
 
-  if( votesmart_webform_is_zip($form['votesmart']['zip']['#default_value']) )
+
+  $zip = $form['votesmart']['zip']['#default_value'];//alias
+  if( votesmart_webform_is_zip($zip) )
   {
+    $candidates = votesmart_webform_get_candidates_by_zip($zip);
 
-    $form['votesmart']['candidates']['#options'] = votesmart_webform_get_candidate_options($form['votesmart']['zip']['#default_value']);
+    $cand_names = array();
+    foreach($candidates as $id => $c )
+      $cand_names[$id] = _votesmart_webform_format_name($c,$component['extra']['name_format']);
 
+    asort($cand_names);
+
+    foreach($cand_names as $cand_id => $cand_name )
+    {
+      $element = array(
+        '#type' => 'checkbox',
+        '#title' => $cand_name,
+      );
+
+      if( !isset($candidates[$cand_id]['Email']) )
+      {
+        $element['#disabled'] = true;
+        $element['#description'] = t('No email found for !candidate.',array('!candidate'=>$cand_name));
+        if( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) )
+        {
+          if( isset($candidates[$cand_id]['Webmail']) )
+            $website = $candidates[$cand_id]['Webmail'];
+          else
+            $website = $candidates[$cand_id]['Website'];
+
+          $element['#description'] = t('No email found for !candidate, but you can try contacting them at <a target="_blank" rel="nofollow" href="!website">their website</a>.',array(
+            '!candidate'=>$cand_name,
+            '!website' => $website
+          ));
+
+        }
+      }
+      $form['votesmart']['candidates'][] = $element;
+      
+    }
   }
-
   return $form;
 }
 
@@ -191,7 +206,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
     '#post_render' => array('webform_element_wrapper'),
     '#component' => $component,
     '#format' => $format,
-    '#value' => isset($value[0]) ? $value[0] : '',
+    '#value' => 'Submitted Data Goes Here',
   );
 }
 
@@ -207,3 +222,30 @@ function _webform_help_votesmart($section) {
   }
 }
 
+function votesmart_webform_ahah_zip_changed()
+{
+
+  // Build the new form.
+  $form_state = array('submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  $form_id = $_POST['form_id'];
+  // Add the new element to the stored form. Without adding the element to the
+  // form, Drupal is not aware of this new elements existence and will not
+  // process it. We retreive the cached form, add the element, and resave.
+  if (!$form = form_get_cache($form_build_id, $form_state)) {
+    exit();
+  }
+  form_set_cache($form_build_id, $form, $form_state);
+  $form += array(
+    '#post' => $_POST,
+    '#programmed' => FALSE,
+  );
+
+  // Rebuild the form.
+  $form = form_builder($form_id, $form, $form_state);
+
+  // Render the new output.
+  $output = drupal_render($form);
+
+  drupal_json(array('status' => TRUE, 'data' => $output));
+}

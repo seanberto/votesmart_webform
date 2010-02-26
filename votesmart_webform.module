@@ -21,6 +21,14 @@ function votesmart_webform_menu()
     'type' => MENU_NORMAL_ITEM
   );
 
+  $items['votesmart_webform/ahah/zip_changed'] = array(
+    'title' => 'AHAH Callback for Votesmart Webform',
+    'page callback' => 'votesmart_webform_ahah_zip_changed',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'votesmart_webform.webform.inc'
+  );
+
   return $items;
 }
 
@@ -137,51 +145,22 @@ function votesmart_webform_get_candidate($candidateId)
 
   if( !isset($candidates[$candidateId]) )
   {
-    $candidates[$candidateId] = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
+    $c_xml = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
+    $c = array();//candidate array
+
+
+    foreach(explode(' ','title firstName middleName lastName nickName') as $var)
+      $c[$var] = $c_xml['candidate']->$var.'';
+
+    foreach($c_xml['address'] as $addr)
+      $c[$addr->webAddressType.''] = $addr->webAddress.'';
+    $candidates[$candidateId] = $c;
   }
 
   return $candidates[$candidateId];
 }
 
-function votesmart_webform_get_candidate_name($candidateId)
-{
-  $c = votesmart_webform_get_candidate($candidateId);
-  $c = $c['candidate'];
-
-  $name = array();
-  $name[] = $c->title;
-  $name[] = $c->firstName;
-  if( !empty($c->middleName) )
-    $name[] = $c->middleName;
-  if( !empty($c->nickName) )
-    $name[] = '"'.$c->nickName.'"';
-  $name[] = $c->lastName;
-  $name = implode(' ',$name);
-
-  return $name;
-}
-
-function votesmart_webform_get_candidate_email($candidateId)
-{
-
-  $c = votesmart_webform_get_candidate($candidateId);
-
-  if( !isset($c->address) ) return false;
-
-  $email = false;
-  foreach($c['address'] as $addr)
-  {
-    if( $addr->webAddressType == 'Email' )
-    {
-      $email = $addr->webAddress;
-      break;
-    }
-  }
-
-  return $email;
-}
-
-function votesmart_webform_get_candidate_options($zip)
+function votesmart_webform_get_candidates_by_zip($zip)
 {
   if( !votesmart_webform_is_zip($zip) ) return array();
 
@@ -193,17 +172,11 @@ function votesmart_webform_get_candidate_options($zip)
 
   $candidates = _votesmart_webform_api('Officials.getByZip',$args,'candidate');
 
-  $options = array();//options to return
+  $sanitized_candidates = array();
   foreach($candidates as $c)
-  {
-    $name = votesmart_webform_get_candidate_name($c->candidateId);
-    $email = votesmart_webform_get_candidate_email($c->candidateId);
-    if( $email )
-      $name.= '*';
+    $sanitized_candidates[$c->candidateId.''] = votesmart_webform_get_candidate($c->candidateId);
 
-    $options[$c->candidateId.''] = "$name";
-  }
-  return $options;
+  return $sanitized_candidates;
 }
 
 ?>
