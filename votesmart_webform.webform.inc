@@ -14,20 +14,20 @@ function _webform_defaults_votesmart() {
     'extra' => array(
       'width' => '',
       'attributes' => array(),
-      'name_format' => '%last, %first',
+      'name_format' => '!last, !first',
       'hide_zip' => FALSE
     )
   );
 }
 
-function _votesmart_webform_format_name($candidate,$format = '%title %last, %first')
+function _votesmart_webform_format_name($candidate,$format = '!title !last, !first')
 {
   return t($format,array(
-    '%title' => $candidate['title'],
-    '%first' => $candidate['firstName'],
-    '%last' =>  $candidate['lastName'],
-    '%middle' => $candidate['middleName'],
-    '%nick' => $candidate['nickName']
+    '!title' => $candidate['title'],
+    '!first' => $candidate['firstName'],
+    '!last' =>  $candidate['lastName'],
+    '!middle' => $candidate['middleName'],
+    '!nick' => $candidate['nickName']
   ));
 }
 
@@ -60,8 +60,8 @@ function _webform_edit_votesmart($component) {
     '#type' => 'textfield',
     '#title' => t('Candidate Name Format'),
     '#weight' => 0,
-    '#description' => t('valid tokens include: %title %first %middle %last %nick'),
-    '#default_value' => $component['extra']['name_format'] ? $component['extra']['name_format'] : '%title %last, %first');
+    '#description' => t('valid tokens include: !title !first !middle !last !nick'),
+    '#default_value' => $component['extra']['name_format'] ? $component['extra']['name_format'] : '!title !last, !first');
 
   $form['extra']['width'] = array(
     '#type' => 'textfield',
@@ -214,7 +214,7 @@ function votesmart_webform_candidate_form_elements($zip,$component)
       }
     }
 
-    $candidate_elements[$cand_id].'>'] = $element;
+    $candidate_elements[$cand_id] = $element;
   }
   
   return $candidate_elements;
@@ -247,15 +247,32 @@ function votesmart_webform_candidate_form_elements($zip,$component)
  *   (such as wrapping the text) or as HTML (ensuring consistent output).
  */
 function _webform_display_votesmart($component, $value, $format = 'html') {
-  return array(
+  if( empty($value) ) return array();
+  $ret = array(
     '#weight' => $component['weight'],
     '#theme' => 'markup',
     '#theme_wrappers' => $format == 'html' ? array('webform_element') : array('webform_element_text'),
     '#post_render' => array('webform_element_wrapper'),
     '#component' => $component,
     '#format' => $format,
-    '#value' => 'Submitted Data Goes Here',
   );
+
+  $value = unserialize($value[0]);
+  $candidates = $value['votesmart']['candidates'];
+  $cand_names = array();
+
+  foreach($candidates as $cand_id => $checked )
+  {
+    $c = votesmart_webform_get_candidate($cand_id);
+    if( $checked ) //sanity check
+      $cand_names[] = _votesmart_webform_format_name($c,$component['extra']['name_format']).' '.l($c['Email'],'mailto:'.$c['Email']);
+  }
+  $o = t('Zip').': '.$value['votesmart']['zip'].'<br />';
+  $o .= t('Candidates Selected').': <ul><li>'.implode('</li><li>',$cand_names).'</li></ul>';
+
+  $ret['#value'] = $o;
+  
+  return $ret;
 }
 
 /**
@@ -263,7 +280,14 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
  */
 function _webform_submit_votesmart($component, &$value)
 {
-  return serialize($value);
+  foreach($value['votesmart']['candidates'] as $cand_id => $checked)
+  {
+    if( !$checked )
+      unset($value['votesmart']['candidates'][$cand_id]);
+  }
+
+  $value = serialize($value);
+  return $value;
 }
 
 

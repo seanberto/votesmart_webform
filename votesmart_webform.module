@@ -164,7 +164,7 @@ function votesmart_webform_get_candidate($candidateId)
        $c[$addr->webAddressType.''] = $addr->webAddress.'';
 
       //insert into db
-      db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,%s)',array($candidateId,serialize($c)));
+      db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,\'%s\')',array($candidateId,serialize($c)));
     }
 
     $candidates[$candidateId] = $c;
