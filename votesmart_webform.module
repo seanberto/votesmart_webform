@@ -145,15 +145,28 @@ function votesmart_webform_get_candidate($candidateId)
 
   if( !isset($candidates[$candidateId]) )
   {
-    $c_xml = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
     $c = array();//candidate array
 
+    $candidate_data = db_result(db_query('SELECT data FROM {votesmart_webform_candidates} WHERE candidate_id = %d LIMIT 1',array($candidateId)));
+    if( $candidate_data ) //not in db
+    {
+      $c = unserialize($candidate_data);
+    }
+    else
+    {
+      $c_xml = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
 
-    foreach(explode(' ','title firstName middleName lastName nickName') as $var)
-      $c[$var] = $c_xml['candidate']->$var.'';
 
-    foreach($c_xml['address'] as $addr)
-      $c[$addr->webAddressType.''] = $addr->webAddress.'';
+      foreach(explode(' ','title firstName middleName lastName nickName') as $var)
+        $c[$var] = $c_xml['candidate']->$var.'';
+
+      foreach($c_xml['address'] as $addr)
+       $c[$addr->webAddressType.''] = $addr->webAddress.'';
+
+      //insert into db
+      db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,%s)',array($candidateId,serialize($c)));
+    }
+
     $candidates[$candidateId] = $c;
   }
 

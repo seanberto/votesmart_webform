@@ -14,7 +14,8 @@ function _webform_defaults_votesmart() {
     'extra' => array(
       'width' => '',
       'attributes' => array(),
-      'name_format' => '%last, %first'
+      'name_format' => '%last, %first',
+      'hide_zip' => FALSE
     )
   );
 }
@@ -46,6 +47,13 @@ function _webform_edit_votesmart($component) {
     '#weight' => 0,
     '#default_value' => $component['extra']['zip'],
     '#element_validate' => array('_webform_edit_votesmart_default_zip_validate'),
+  );
+
+  $form['extra']['hide_zip'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Hide Zip'),
+    '#weight'  => 0,
+    '#default_value' => $component['extra']['hide_zip']
   );
 
   $form['extra']['name_format'] = array(
@@ -84,6 +92,24 @@ function _webform_edit_votesmart_default_zip_validate($zip_element, &$form_state
 }
 
 /**
+ * Validate the Zip Code BLANK NOT ALLOWED
+ * @param $zip_element The zip form element.
+ * @param $form_state The full form state for the webform.
+ */
+function _webform_edit_votesmart_zip_validate($zip_element, &$form_state)
+{
+  $zip = $zip_element['#value'];//alias
+  if( empty($zip) )
+    form_error($zip_element,t('zip can not be blank.',array('!value'=>$zip)));
+
+  if( !votesmart_webform_is_zip($zip) )
+  {
+    form_error($zip_element,t('!value is not a valid zip code.',array('!value'=>$zip)));
+  }
+}
+
+
+/**
  * Render a Webform component to be part of a form.
  *
  * @param $component
@@ -95,18 +121,32 @@ function _webform_edit_votesmart_default_zip_validate($zip_element, &$form_state
  *   each value saved in this field.
  */
 function _webform_render_votesmart($component, $value = NULL) {
+
+
+  if ($value[0]) {
+    $zip_value = $value[0];
+  }
+  else {
+    $zip_value = _webform_filter_values($component['zip']);
+  }
+
   $dom_id = 'webform-component-'.$component['form_key'];
   $form = array(
     '#prefix' => '<div id="'.$dom_id.'" class="webform-component-votesmart">',
     'votesmart' => array(),
     '#suffix' => '</div><!--/#'.$dom_id.' .webform-component-votesmart-->'
   );
+
+  $form['votesmart']['markup'] = array('#type'=>'markup','#value'=>print_r($value,1).print_r($component,1));
+
   $form['votesmart']['zip'] = array(
-    '#type' => 'textfield',
+    '#type' => $component['extra']['hide_zip'] ? 'hidden' : 'textfield',
     '#title' => t('Zip'),
     '#required' => TRUE,
     '#weight' => $component['weight'],
+    '#default_value' => $component['zip'],
     '#description'   => _webform_filter_descriptions($component['extra']['description']),
+    '#element_validate' => array('_webform_edit_votesmart_zip_validate'),
     '#ahah' => array(
       'event' => 'change',
       'wrapper' => $dom_id,
@@ -116,9 +156,6 @@ function _webform_render_votesmart($component, $value = NULL) {
     )
   );
 
-  $form['votesmart']['candidates'] = array(
-    '#weight' => $component['weight']+1
-  );
 
   if( !isset($form['votesmart']['zip']['#default_value'])
       && !empty($component['extra']['zip'])
@@ -129,46 +166,58 @@ function _webform_render_votesmart($component, $value = NULL) {
 
 
   $zip = $form['votesmart']['zip']['#default_value'];//alias
-  if( votesmart_webform_is_zip($zip) )
-  {
-    $candidates = votesmart_webform_get_candidates_by_zip($zip);
 
-    $cand_names = array();
-    foreach($candidates as $id => $c )
-      $cand_names[$id] = _votesmart_webform_format_name($c,$component['extra']['name_format']);
+  $form['votesmart']['candidates'] = votesmart_webform_candidate_form_elements($zip,$component);
+  $form['votesmart']['candidates']['#weight'] = $component['weight']+1;
 
-    asort($cand_names);
-
-    foreach($cand_names as $cand_id => $cand_name )
-    {
-      $element = array(
-        '#type' => 'checkbox',
-        '#title' => $cand_name,
-      );
-
-      if( !isset($candidates[$cand_id]['Email']) )
-      {
-        $element['#disabled'] = true;
-        $element['#description'] = t('No email found for !candidate.',array('!candidate'=>$cand_name));
-        if( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) )
-        {
-          if( isset($candidates[$cand_id]['Webmail']) )
-            $website = $candidates[$cand_id]['Webmail'];
-          else
-            $website = $candidates[$cand_id]['Website'];
-
-          $element['#description'] = t('No email found for !candidate, but you can try contacting them at <a target="_blank" rel="nofollow" href="!website">their website</a>.',array(
-            '!candidate'=>$cand_name,
-            '!website' => $website
-          ));
-
-        }
-      }
-      $form['votesmart']['candidates'][] = $element;
-      
-    }
-  }
   return $form;
+}
+
+function votesmart_webform_candidate_form_elements($zip,$component)
+{
+  if( !votesmart_webform_is_zip($zip) ) return array();
+
+  $candidates = votesmart_webform_get_candidates_by_zip($zip);
+  $candidate_elements = array();
+  
+  $cand_names = array();
+  foreach($candidates as $id => $c )
+    $cand_names[$id] = _votesmart_webform_format_name($c,$component['extra']['name_format']);
+
+  asort($cand_names);
+
+  foreach($cand_names as $cand_id => $cand_name )
+  {
+    $element = array(
+      '#type' => 'checkbox',
+      '#title' => $cand_name,
+    );
+
+    if( !isset($candidates[$cand_id]['Email']) )
+    {
+      $element['#disabled'] = true;
+      $element['#description'] = t('No email found for !candidate.',array('!candidate'=>$cand_name));
+      if( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) )
+      {
+        if( isset($candidates[$cand_id]['Webmail']) )
+        {
+          $website = $candidates[$cand_id]['Webmail'];
+        }
+        else
+          $website = $candidates[$cand_id]['Website'];
+
+        $element['#description'] = t('No email found for !candidate, but you can try contacting them at <a target="_blank" rel="nofollow" href="!website">their website</a>.',array(
+          '!candidate'=>$cand_name,
+          '!website' => $website
+        ));
+
+      }
+    }
+
+    $candidate_elements[$cand_id].'>'] = $element;
+  }
+  
+  return $candidate_elements;
 }
 
 /**
@@ -199,9 +248,8 @@ function _webform_render_votesmart($component, $value = NULL) {
  */
 function _webform_display_votesmart($component, $value, $format = 'html') {
   return array(
-    '#title' => $component['name'],
     '#weight' => $component['weight'],
-    '#theme' => 'webform_display_textfield',
+    '#theme' => 'markup',
     '#theme_wrappers' => $format == 'html' ? array('webform_element') : array('webform_element_text'),
     '#post_render' => array('webform_element_wrapper'),
     '#component' => $component,
@@ -209,6 +257,15 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
     '#value' => 'Submitted Data Goes Here',
   );
 }
+
+/**
+ * Implementation of _webform_submit_component().
+ */
+function _webform_submit_votesmart($component, &$value)
+{
+  return serialize($value);
+}
+
 
 /**
  * Module specific instance of hook_help().
@@ -228,21 +285,24 @@ function votesmart_webform_ahah_zip_changed()
   // Build the new form.
   $form_state = array('submitted' => FALSE);
   $form_build_id = $_POST['form_build_id'];
-  $form_id = $_POST['form_id'];
   // Add the new element to the stored form. Without adding the element to the
   // form, Drupal is not aware of this new elements existence and will not
   // process it. We retreive the cached form, add the element, and resave.
   if (!$form = form_get_cache($form_build_id, $form_state)) {
     exit();
   }
-  form_set_cache($form_build_id, $form, $form_state);
-  $form += array(
-    '#post' => $_POST,
-    '#programmed' => FALSE,
-  );
 
-  // Rebuild the form.
-  $form = form_builder($form_id, $form, $form_state);
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+
+  //process submit handlers
+  //whatever is worth keeping is put in $form_state
+  drupal_process_form($form_id,$form,$form_state);
+
+  //rebuilds form, $_POST is cleared
+  $form = drupal_rebuild_form($form_id, $form_state,$args, $form_build_id);
 
   // Render the new output.
   $output = drupal_render($form);
