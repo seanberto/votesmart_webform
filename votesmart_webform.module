@@ -38,6 +38,7 @@ function votesmart_webform_webform_component_info() {
   //component was originally called votesmart_webform,
   //but it was too long? m got chopped off.
   $components['votesmart'] = array(
+    'type' => 'email',
     'label' => t('Vote Smart Lookup'),
     'description' => t('Looks up Representative for Given Zip Code'),
     'features' => array(

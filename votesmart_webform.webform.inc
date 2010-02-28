@@ -8,10 +8,13 @@ function _webform_defaults_votesmart() {
   return array(
     'name' => '',
     'form_key' => NULL,
+    'email' => 1,
     'pid' => 0,
     'weight' => 0,
     'zip' => NULL,
+    'type' => 'hidden',
     'extra' => array(
+      'email' => 1,
       'width' => '',
       'attributes' => array(),
       'name_format' => '!last, !first',
