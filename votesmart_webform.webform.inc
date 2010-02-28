@@ -140,15 +140,19 @@ function _webform_render_votesmart($component, $value = NULL) {
     '#suffix' => '</div><!--/#'.$dom_id.' .webform-component-votesmart-->'
   );
 
-  $form['votesmart']['markup'] = array('#type'=>'markup','#value'=>print_r($value,1).print_r($component,1));
+  //HACK: Need to find a better way
+  $votesmart_post = _votesmart_webform_array_key_search($_POST,'votesmart');
+  if( $votesmart_post )
+    $component['zip'] = $votesmart_post['zip'];
 
   $form['votesmart']['zip'] = array(
     '#type' => $component['extra']['hide_zip'] ? 'hidden' : 'textfield',
     '#title' => t('Zip'),
     '#required' => TRUE,
+    '#size' => 10,
     '#weight' => $component['weight'],
     '#default_value' => $component['zip'],
-    '#description'   => _webform_filter_descriptions($component['extra']['description']),
+    '#description'   => t('Postal Code in format 12345 or 12345-1234'),
     '#element_validate' => array('_webform_edit_votesmart_zip_validate'),
     '#ahah' => array(
       'event' => 'change',
@@ -169,6 +173,7 @@ function _webform_render_votesmart($component, $value = NULL) {
 
 
   $zip = $form['votesmart']['zip']['#default_value'];//alias
+
 
   $form['votesmart']['candidates'] = votesmart_webform_candidate_form_elements($zip,$component);
   $form['votesmart']['candidates']['#weight'] = $component['weight']+1;
@@ -261,7 +266,9 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   );
 
   $value = unserialize($value[0]);
+
   $candidates = $value['votesmart']['candidates'];
+  if( !$candidates ) $candidates = array();
   $cand_names = array();
 
   foreach($candidates as $cand_id => $checked )
@@ -283,6 +290,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
  */
 function _webform_submit_votesmart($component, &$value)
 {
+  if( empty($value) || !isset($value['votesmart']['candidates']) ) return null;
   foreach($value['votesmart']['candidates'] as $cand_id => $checked)
   {
     if( !$checked )
@@ -308,31 +316,85 @@ function _webform_help_votesmart($section) {
 
 function votesmart_webform_ahah_zip_changed()
 {
-
-  // Build the new form.
-  $form_state = array('submitted' => FALSE);
+  $form_state = array('storage' =>  NULL, 'submitted' => FALSE);
   $form_build_id = $_POST['form_build_id'];
-  // Add the new element to the stored form. Without adding the element to the
-  // form, Drupal is not aware of this new elements existence and will not
-  // process it. We retreive the cached form, add the element, and resave.
-  if (!$form = form_get_cache($form_build_id, $form_state)) {
-    exit();
-  }
-
+  $form = form_get_cache($form_build_id, $form_state);
   $args = $form['#parameters'];
   $form_id = array_shift($args);
-  $form_state['post'] = $form['#post'] = $_POST;
-  $form['#programmed'] = $form['#redirect'] = FALSE;
+  $form['#post'] = $form_state['post'] = $_POST;
+  $form['#redirect'] = $form['#programmed'] = FALSE;
 
-  //process submit handlers
-  //whatever is worth keeping is put in $form_state
-  drupal_process_form($form_id,$form,$form_state);
+  drupal_process_form($form_id, $form, $form_state);
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
 
-  //rebuilds form, $_POST is cleared
-  $form = drupal_rebuild_form($form_id, $form_state,$args, $form_build_id);
+  $output = theme('status_messages');
 
-  // Render the new output.
-  $output = drupal_render($form);
-
+  $form_portion = _votesmart_webform_element_children_search($form,'votesmart') ;
+  if( $form_portion )
+    $output .= drupal_render($form_portion);
+  
   drupal_json(array('status' => TRUE, 'data' => $output));
+}
+
+
+
+function votesmart_webform_form_alter(&$form, $form_state, $form_id)
+{
+  if( preg_match('@webform_(.*)@',$form_id,$matches) )
+  {
+    if( _votesmart_webform_element_children_search($form,'votesmart') )
+    {
+      $form['#validate'][] = '_votesmart_webform_validate_candidates';
+    }
+  }
+}
+
+function _votesmart_webform_element_children_search($form,$key)
+{
+  $element_children = element_children($form);
+  $found = array_search($key,$element_children);
+  if( $found ) return $form[$key];
+
+  foreach($element_children as $e)
+  {
+    $result = _votesmart_webform_element_children_search($form[$e],$key);
+    if( $result != false ) return $result;
+  }
+  return false;
+}
+
+function _votesmart_webform_array_key_search($arr,$key)
+{
+  $found = array_key_exists($key,$arr);
+  if( $found ) return $arr[$key];
+
+  foreach($arr as $e)
+  {
+    $result = _votesmart_webform_array_key_search($e,$key);
+    if( $result != false ) return $result;
+  }
+  return false;
+}
+
+
+
+
+function _votesmart_webform_validate_candidates($form, &$form_state, $first_run = TRUE)
+{
+  $votesmart = _votesmart_webform_element_children_search($form,'votesmart');
+  $candidates = element_children($votesmart['candidates']);//alias
+
+  $error = true;
+
+  foreach( $candidates as $cand_id )
+  {
+    if( $votesmart['candidates'][$cand_id]['#value'] == 1 )
+    {
+      $error = false;
+      break;
+    }
+  }
+  
+  if( $error )
+    form_set_error('votesmart',t('Please select a candidate'));
 }

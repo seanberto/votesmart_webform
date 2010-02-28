@@ -1,4 +1,14 @@
 <?php
+
+if( function_exists('email_webform_component_info') )
+  define('VOTESMART_WEBFORM_HAS_PLUGIN_SUPPORT',TRUE);
+else
+  define('VOTESMART_WEBFORM_HAS_PLUGIN_SUPPORT',FALSE);
+
+
+if( ! VOTESMART_WEBFORM_HAS_PLUGIN_SUPPORT )
+  include('votesmart_webform.webform.inc');
+
 function votesmart_webform_menu()
 {
   $items = array();
@@ -192,5 +202,15 @@ function votesmart_webform_get_candidates_by_zip($zip)
 
   return $sanitized_candidates;
 }
+/*
+//only needed if attempting to hook into webform 2.x
+function votesmart_webform_form_alter(&$form, $form_state, $form_id)
+{
+  if( $form_id != 'webform_components_form' ) return;
+
+  $form['add']['type']['#options'][] = 'votesmart';
+  asort($form['add']['type']['#options']);
+}
+*/
 
 ?>
