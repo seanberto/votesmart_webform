@@ -125,6 +125,7 @@ function _webform_edit_votesmart_zip_validate($zip_element, &$form_state)
  */
 function _webform_render_votesmart($component, $value = NULL) {
 
+  drupal_add_css(drupal_get_path('module','votesmart_webform').'/votesmart_webform.css','module','all',false);
 
   if ($value[0]) {
     $zip_value = $value[0];
@@ -137,7 +138,8 @@ function _webform_render_votesmart($component, $value = NULL) {
   $form = array(
     '#prefix' => '<div id="'.$dom_id.'" class="webform-component-votesmart">',
     'votesmart' => array(),
-    '#suffix' => '</div><!--/#'.$dom_id.' .webform-component-votesmart-->'
+    '#suffix' => '</div><!--/#'.$dom_id.' .webform-component-votesmart-->',
+    '#weight' => $component['weight']
   );
 
   //HACK: Need to find a better way
@@ -150,7 +152,6 @@ function _webform_render_votesmart($component, $value = NULL) {
     '#title' => t('Zip'),
     '#required' => TRUE,
     '#size' => 10,
-    '#weight' => $component['weight'],
     '#default_value' => $component['zip'],
     '#description'   => t('Postal Code in format 12345 or 12345-1234'),
     '#element_validate' => array('_webform_edit_votesmart_zip_validate'),
@@ -174,9 +175,20 @@ function _webform_render_votesmart($component, $value = NULL) {
 
   $zip = $form['votesmart']['zip']['#default_value'];//alias
 
+  $candidates = votesmart_webform_candidate_form_elements($zip,$component);
 
-  $form['votesmart']['candidates'] = votesmart_webform_candidate_form_elements($zip,$component);
-  $form['votesmart']['candidates']['#weight'] = $component['weight']+1;
+  if( !empty($candidates) )
+  {
+    $form['votesmart']['candidates_prefix'] = array(
+      '#type' => 'markup',
+      '#value' => '<div class="votesmart-webform-candidate-wrapper">'
+    );
+    $form['votesmart']['candidates'] = $candidates;
+    $form['votesmart']['candidate_suffix'] = array(
+      '#type' => 'markup',
+      '#value' => '</div><!--/.votesmart-webform-candidate-wrapper-->'
+    );
+  }
 
   return $form;
 }
@@ -214,7 +226,7 @@ function votesmart_webform_candidate_form_elements($zip,$component)
         else
           $website = $candidates[$cand_id]['Website'];
 
-        $element['#description'] = t('No email found for !candidate, but you can try contacting them at <a target="_blank" rel="nofollow" href="!website">their website</a>.',array(
+        $element['#description'] = t('No email found for !candidate. Try contacting them at <a target="_blank" rel="nofollow" href="!website">their&nbsp;website</a>.',array(
           '!candidate'=>$cand_name,
           '!website' => $website
         ));
@@ -342,7 +354,7 @@ function votesmart_webform_form_alter(&$form, $form_state, $form_id)
 {
   if( preg_match('@webform_(.*)@',$form_id,$matches) )
   {
-    if( _votesmart_webform_element_children_search($form,'votesmart') )
+    if( $votesmart = _votesmart_webform_element_children_search($form,'votesmart') )
     {
       $form['#validate'][] = '_votesmart_webform_validate_candidates';
     }
@@ -365,6 +377,8 @@ function _votesmart_webform_element_children_search($form,$key)
 
 function _votesmart_webform_array_key_search($arr,$key)
 {
+  if( !is_array($arr) ) return false;
+
   $found = array_key_exists($key,$arr);
   if( $found ) return $arr[$key];
 
@@ -382,6 +396,9 @@ function _votesmart_webform_array_key_search($arr,$key)
 function _votesmart_webform_validate_candidates($form, &$form_state, $first_run = TRUE)
 {
   $votesmart = _votesmart_webform_element_children_search($form,'votesmart');
+  if( form_get_error($votesmart['zip']) )
+    return; // wait until we have a valid zip
+
   $candidates = element_children($votesmart['candidates']);//alias
 
   $error = true;

@@ -1,14 +1,5 @@
 <?php
 
-if( function_exists('email_webform_component_info') )
-  define('VOTESMART_WEBFORM_HAS_PLUGIN_SUPPORT',TRUE);
-else
-  define('VOTESMART_WEBFORM_HAS_PLUGIN_SUPPORT',FALSE);
-
-
-if( ! VOTESMART_WEBFORM_HAS_PLUGIN_SUPPORT )
-  include('votesmart_webform.webform.inc');
-
 function votesmart_webform_menu()
 {
   $items = array();
