@@ -15,6 +15,8 @@ function _webform_defaults_votesmart() {
     'type' => 'hidden',
     'extra' => array(
       'email' => 1,
+      'allow_candidates_without_email' => 1,
+      'hide_no_email_warnings' => 1,
       'width' => '',
       'attributes' => array(),
       'name_format' => '!last, !first',
@@ -58,6 +60,22 @@ function _webform_edit_votesmart($component) {
     '#weight'  => 0,
     '#default_value' => $component['extra']['hide_zip']
   );
+
+  $form['extra']['allow_candidates_without_email'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow Candidates Without Email to be Checked'),
+    '#weight'  => 0,
+    '#default_value' => $component['extra']['allow_candidates_without_email']
+  );
+
+
+  $form['extra']['hide_no_email_warnings'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Hide No Email Warning Descriptions'),
+    '#weight'  => 0,
+    '#default_value' => $component['extra']['hide_no_email_warnings']
+  );
+
 
   $form['extra']['name_format'] = array(
     '#type' => 'textfield',
@@ -213,9 +231,10 @@ function votesmart_webform_candidate_form_elements($zip,$component)
       '#title' => $cand_name,
     );
 
-    if( !isset($candidates[$cand_id]['Email']) )
+    if( !$component['extra']['hide_no_email_warnings'] && !isset($candidates[$cand_id]['Email']) )
     {
-      $element['#disabled'] = true;
+      if( !$component['extra']['allow_candidates_without_email'] )
+        $element['#disabled'] = true;
       $element['#description'] = t('No email found for !candidate.',array('!candidate'=>$cand_name));
       if( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) )
       {
