@@ -1,0 +1,50 @@
+<?php
+// $Id
+
+/**
+ * @file
+ * Install file for votesmart_webform module.
+ *
+ * @tables {votesmart_webform_candidates}
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function votesmart_webform_install() {
+  // Create tables.
+  drupal_install_schema('votesmart_webform');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function votesmart_webform_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('votesmart_webform');
+  menu_rebuild();
+}
+
+/**
+ * Implementation of hook__schema().
+ */
+function votesmart_webform_schema() {
+  // Database schema for {votesmart_webform_candidates} table.
+  $schema['votesmart_webform_candidates'] = array(
+    'description' => t('cache for candidates retrieved from votesmart api'),
+    'fields' => array(
+      'candidate_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('candidate_id'),
+  );
+  
+  return $schema;
+}
