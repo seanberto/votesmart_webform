@@ -141,9 +141,12 @@ function _webform_edit_votesmart_zip_validate($zip_element, &$form_state)
  *   configuration. This value will always be an array, keyed numerically for
  *   each value saved in this field.
  */
-function _webform_render_votesmart($component, $value = NULL) {
+function _webform_render_votesmart($component, $value = NULL)
+{
+  $path = drupal_get_path('module','votesmart_webform');
 
-  drupal_add_css(drupal_get_path('module','votesmart_webform').'/votesmart_webform.css','module','all',false);
+  drupal_add_css($path.'/votesmart_webform.css','module','all',0);
+  drupal_add_js($path.'/votesmart_webform.js','module','header',0,1,0);
 
   if ($value[0]) {
     $zip_value = $value[0];

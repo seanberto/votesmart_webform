@@ -33,19 +33,28 @@ function votesmart_webform_candidate_wrapper( $candidate_wrapper )
 
 }
 jQuery(function(){
-  $component = $('.webform-component-votesmart');
-  $candidate_wrapper = $component.find('.votesmart-webform-candidate-wrapper');
-  window.setTimeout(function(){
-    votesmart_webform_candidate_wrapper($candidate_wrapper)
-  },500);
+  $components = $('.webform-component-votesmart');
 
+  $components.each(function(){
+    $component = $(this);
 
-  $component.bind('DOMNodeInserted',function(e){
-    $new_content = $(e.target);
-    $candidate_wrapper = $new_content.find('.votesmart-webform-candidate-wrapper');
+    $zip = $component.find('input[name~=zip]');
+    if( $zip.length == 1 && $zip.val().match(/\d+/) )
+      $zip.trigger('change');
+
+    $candidate_wrapper = $component.find('.votesmart-webform-candidate-wrapper');
     window.setTimeout(function(){
-      votesmart_webform_candidate_wrapper($candidate_wrapper)
+     votesmart_webform_candidate_wrapper($candidate_wrapper)
     },500);
 
+
+    $component.bind('DOMNodeInserted',function(e){
+      $new_content = $(e.target);
+      $candidate_wrapper = $new_content.find('.votesmart-webform-candidate-wrapper');
+      window.setTimeout(function(){
+        votesmart_webform_candidate_wrapper($candidate_wrapper)
+      },500);
+
+    })
   })
 });

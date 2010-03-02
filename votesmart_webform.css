@@ -1,1 +1,2 @@
-.votesmart-webform-candidate-wrapper { height:300px; width:38em; padding-right:1em; overflow:auto; clear:right; }
+.webform-component-votesmart { width:38em; }
+.votesmart-webform-candidate-wrapper { height:300px; padding-right:1em; overflow:auto; clear:right; }
