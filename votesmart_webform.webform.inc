@@ -148,12 +148,11 @@ function _webform_render_votesmart($component, $value = NULL)
   drupal_add_css($path.'/votesmart_webform.css','module','all',0);
   drupal_add_js($path.'/votesmart_webform.js','module','header',0,1,0);
 
-  if ($value[0]) {
-    $zip_value = $value[0];
-  }
-  else {
-    $zip_value = _webform_filter_values($component['zip']);
-  }
+  if( !empty($value) )
+    $value = unserialize($value[0]);
+
+  if( isset($value['votesmart']) && isset($value['votesmart']['zip']) )
+    $component['zip'] = $value['votesmart']['zip'];
 
   $dom_id = 'webform-component-'.$component['form_key'];
   $form = array(
@@ -209,6 +208,11 @@ function _webform_render_votesmart($component, $value = NULL)
       '#type' => 'markup',
       '#value' => '</div><!--/.votesmart-webform-candidate-wrapper-->'
     );
+  }
+
+  foreach($value['votesmart']['candidates'] as $k => $v )
+  {
+    $form['votesmart']['candidates'][$k]['#default_value'] = $v;
   }
 
   return $form;
