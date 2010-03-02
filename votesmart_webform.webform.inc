@@ -210,10 +210,9 @@ function _webform_render_votesmart($component, $value = NULL)
     );
   }
 
-  foreach($value['votesmart']['candidates'] as $k => $v )
-  {
-    $form['votesmart']['candidates'][$k]['#default_value'] = $v;
-  }
+  if( isset($value['votesmart']['candidates']) )
+    foreach($value['votesmart']['candidates'] as $k => $v )
+      $form['votesmart']['candidates'][$k]['#default_value'] = $v;
 
   return $form;
 }
