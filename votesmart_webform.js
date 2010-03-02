@@ -9,9 +9,8 @@ function votesmart_webform_update_candidate( $candidate, $selected_candidates )
   if( $t.filter(':checked').length == 1 )
   {
     $selected_candidate = $('<a href="#" title="uncheck candidate" id="'+ selected_id+'">'+ label +'; </a>');
-    var that = this;
     $selected_candidate.click(function(){
-      $(that).attr('checked','');
+      $candidate.attr('checked','');
       $(this).remove();
       return false;
     });
