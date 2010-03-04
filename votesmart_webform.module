@@ -15,13 +15,6 @@ function votesmart_webform_menu()
     'type' => MENU_NORMAL_ITEM,
   );
 
-  $items['votesmart_webform/test'] = array(
-    'title' => 'Vote Smart Test',
-    'page callback' => 'votesmart_webform_test',
-    'access arguments' => array(),
-    'type' => MENU_NORMAL_ITEM
-  );
-
   $items['votesmart_webform/ahah/zip_changed'] = array(
     'title' => 'AHAH Callback for Votesmart Webform',
     'page callback' => 'votesmart_webform_ahah_zip_changed',
@@ -52,24 +45,6 @@ function votesmart_webform_webform_component_info() {
   );
 
   return $components;
-}
-
-
-function votesmart_webform_test()
-{
-  $candidates = _votesmart_webform_api('Officials.getByZip',array('zip5' => '27511'),'candidate');
-  $candidate_contact_info = array();
-  $first = true;
-  foreach($candidates as $candidate)
-  {
-//    if( !$first ) break;
-//    if( $first ) $first = false;
-    $cid = $candidate->candidateId; //alias
-    $contact_info = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$cid));
-    $candidate_contact_info[] = $contact_info;
-  }
-  dpr($candidate_contact_info);
-  return '';
 }
 
 /**
