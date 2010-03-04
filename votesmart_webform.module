@@ -1,5 +1,4 @@
 <?php
-
 function votesmart_webform_menu()
 {
   $items = array();
@@ -124,10 +123,29 @@ function _votesmart_webform_api($request, $args = array(), $item = null) {
   return $ret;
 }
 
+function votesmart_webform_is_state($state_abbr)
+{
+  require_once('votesmart_webform.defines.php');
+  global $VOTESMART_WEBFORM_US_STATES;
+  return isset($VOTESMART_WEBFORM_US_STATES[$state_abbr]);
+}
+
+//office types and ids are the same,
+//keeping language the same as votesmart api
+function votesmart_webform_is_office_id($officeId)
+{
+  require_once('votesmart_webform.defines.php');
+  global $VOTESMART_WEBFORM_OFFICE_TYPES;
+  return isset($VOTESMART_WEBFORM_OFFICE_TYPES[$officeId]);
+}
+
+
 function votesmart_webform_is_zip($zip)
 {
   return preg_match('/^[0-9]{5}([- ]?[0-9]{4})?$/', $zip);
 }
+
+
 
 function votesmart_webform_get_candidate($candidateId)
 {
@@ -186,15 +204,27 @@ function votesmart_webform_get_candidates_by_zip($zip)
 
   return $sanitized_candidates;
 }
-/*
-//only needed if attempting to hook into webform 2.x
-function votesmart_webform_form_alter(&$form, $form_state, $form_id)
+
+function votesmart_webform_get_candidates_by_state($state,$officeId = NULL)
 {
-  if( $form_id != 'webform_components_form' ) return;
+  if( !votesmart_webform_is_state($state) ) return array();
 
-  $form['add']['type']['#options'][] = 'votesmart';
-  asort($form['add']['type']['#options']);
+  if( isset($officeId) && !votesmart_webform_is_office_id($officeId) )
+    $officeId = NULL;
+
+  $args = array('stateId' => 'NC');
+  if( isset($officeId) /* TODO: && is valid office id */ )
+  {
+    $args['officeId'] = $officeId;
+    $candidates = _votesmart_webform_api('Officials.getByOfficeState',$args,'candidate');
+  }
+  else
+    $candidates = _votesmart_webform_api('Officials.getStateWide',$args,'candidate');
+
+  $sanitized_candidates = array();
+  foreach($candidates as $c)
+    $sanitized_candidates[$c->candidateId.''] = votesmart_webform_get_candidate($c->candidateId);
+
+  return $sanitized_candidates;
 }
-*/
 
-?>
