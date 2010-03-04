@@ -44,8 +44,8 @@ function _votesmart_webform_format_name($candidate,$format = '!title !last, !fir
  *   An array of form items to be displayed on the edit component page
  */
 function _webform_edit_votesmart($component) {
- // require_once('votesmart_webform.defines.php');
-//  global $VOTESMART_WEBFORM_US_STATES;
+  require_once('votesmart_webform.defines.php');
+  global $VOTESMART_WEBFORM_US_STATES;
 
   $form = array('extra' => array());
 
@@ -61,7 +61,7 @@ function _webform_edit_votesmart($component) {
     '#title' => t('Specify Default State, has no effect if zip is specified'),
     '#weight' => 0,
     '#default_value' => $component['extra']['state'],
-    '#options' =>array()// $VOTESMART_WEBFORM_US_STATES
+    '#options' => $VOTESMART_WEBFORM_US_STATES
   );
   $form['extra']['hide_zip'] = array(
     '#type' => 'checkbox',
@@ -110,33 +110,67 @@ function _webform_edit_votesmart($component) {
  * @param $zip_element The zip form element.
  * @param $form_state The full form state for the webform.
  */
-function _webform_edit_votesmart_default_zip_validate($zip_element, &$form_state)
+function _webform_edit_votesmart_default_zip_validate($element, &$form_state)
 {
-  $zip = $zip_element['#value'];//alias
+  $zip = $element['#value'];//alias
   if( empty($zip) ) return;
 
   if( !votesmart_webform_is_zip($zip) )
   {
-    form_error($zip_element,t('!value is not a valid zip code.',array('!value'=>$zip)));
+    form_error($element,t('!value is not a valid zip code.',array('!value'=>$zip)));
   }
 }
 
 /**
  * Validate the Zip Code BLANK NOT ALLOWED
- * @param $zip_element The zip form element.
+ * @param $element The zip form element.
  * @param $form_state The full form state for the webform.
  */
-function _webform_edit_votesmart_zip_validate($zip_element, &$form_state)
+function _webform_edit_votesmart_zip_validate($element, &$form_state)
 {
-  $zip = $zip_element['#value'];//alias
+  $zip = $element['#value'];//alias
   if( empty($zip) )
-    form_error($zip_element,t('zip can not be blank.',array('!value'=>$zip)));
+    form_error($element,t('zip can not be blank.',array('!value'=>$zip)));
 
   if( !votesmart_webform_is_zip($zip) )
   {
-    form_error($zip_element,t('!value is not a valid zip code.',array('!value'=>$zip)));
+    form_error($element,t('!value is not a valid zip code.',array('!value'=>$zip)));
   }
 }
+
+/**
+ * Validate the Default State
+ * @param $element The state form element.
+ * @param $form_state The full form state for the webform.
+ */
+function _webform_edit_votesmart_default_zip_validate($element, &$form_state)
+{
+  $state = $element['#value'];//alias
+  if( empty($state) ) return;
+
+  if( !votesmart_webform_is_us_state($state) )
+  {
+    form_error($element,t('!value is not a valid state.',array('!value'=>$state)));
+  }
+}
+
+/**
+ * Validate the State BLANK NOT ALLOWED
+ * @param $element The state form element.
+ * @param $form_state The full form state for the webform.
+ */
+function _webform_edit_votesmart_state_validate($element, &$form_state)
+{
+  $state = $element['#value'];//alias
+  if( empty($state) )
+    form_error($element,t('Please select a state.'));
+
+  if( !votesmart_webform_is_us_state($state) )
+  {
+    form_error($element,t('!value is not a valid state.',array('!value'=>$zip)));
+  }
+}
+
 
 
 /**

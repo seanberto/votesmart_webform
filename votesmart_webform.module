@@ -100,7 +100,7 @@ function _votesmart_webform_api($request, $args = array(), $item = null) {
   $args = array_merge($args, array('key' => $key));
   $url .= $request . '?';
   foreach ($args as $k => $v) {
-    $url .= check_plain($k) . '=' . check_plain($v) . '&';;
+    $url .= check_plain($k) . '=' . check_plain($v) . '&';
   }
 
   // Contact the REST API.
@@ -123,7 +123,7 @@ function _votesmart_webform_api($request, $args = array(), $item = null) {
   return $ret;
 }
 
-function votesmart_webform_is_state($state_abbr)
+function votesmart_webform_is_us_state($state_abbr)
 {
   require_once('votesmart_webform.defines.php');
   global $VOTESMART_WEBFORM_US_STATES;
@@ -152,7 +152,8 @@ function votesmart_webform_get_candidate($candidateId)
   
   $candidateId.='';//convert to string
 
-  static $candidates;
+  static $candidates;//cache candidates
+  
   if( !isset($candidates) )
     $candidates = array();
 
@@ -168,10 +169,21 @@ function votesmart_webform_get_candidate($candidateId)
     else
     {
       $c_xml = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
+			
+			$vars_to_save = array(
+			 'title',
+			 'firstName',
+			 'middleName',
+			 'lastName',
+			 'suffix',
+			 'nickName'
+			);
 
-
-      foreach(explode(' ','title firstName middleName lastName nickName') as $var)
-        $c[$var] = $c_xml['candidate']->$var.'';
+      foreach($vars_to_save as $var)
+			{
+				if( isset($c_xml['candidate']->$var) && !empty($c_xml['candidate']->$var) )
+          $c[$var] = $c_xml['candidate']->$var.'';
+			}
 
       foreach($c_xml['address'] as $addr)
        $c[$addr->webAddressType.''] = $addr->webAddress.'';
@@ -190,7 +202,7 @@ function votesmart_webform_get_candidates_by_zip($zip)
 {
   if( !votesmart_webform_is_zip($zip) ) return array();
 
-  $zip = preg_replace('@[^\d]@','',$zip);//trip non digits
+  $zip = preg_replace('@[^\d]@','',$zip);//strip non digits
 
   $args = array('zip5' => substr($zip,0,5) );
   if( strlen($zip) == 9 )
@@ -198,7 +210,10 @@ function votesmart_webform_get_candidates_by_zip($zip)
 
   $candidates = _votesmart_webform_api('Officials.getByZip',$args,'candidate');
 
+  if( is_array($candidates) ) return array();
+
   $sanitized_candidates = array();
+	
   foreach($candidates as $c)
     $sanitized_candidates[$c->candidateId.''] = votesmart_webform_get_candidate($c->candidateId);
 
@@ -207,13 +222,13 @@ function votesmart_webform_get_candidates_by_zip($zip)
 
 function votesmart_webform_get_candidates_by_state($state,$officeId = NULL)
 {
-  if( !votesmart_webform_is_state($state) ) return array();
+  if( !votesmart_webform_is_us_state($state) ) return array();
 
   if( isset($officeId) && !votesmart_webform_is_office_id($officeId) )
     $officeId = NULL;
 
-  $args = array('stateId' => 'NC');
-  if( isset($officeId) /* TODO: && is valid office id */ )
+  $args = array('stateId' => $state );
+  if( isset($officeId) && votesmart_webform_is_office_id($officeId) )
   {
     $args['officeId'] = $officeId;
     $candidates = _votesmart_webform_api('Officials.getByOfficeState',$args,'candidate');
@@ -221,7 +236,10 @@ function votesmart_webform_get_candidates_by_state($state,$officeId = NULL)
   else
     $candidates = _votesmart_webform_api('Officials.getStateWide',$args,'candidate');
 
+  if( is_array($candidates) ) return array();
+
   $sanitized_candidates = array();
+	
   foreach($candidates as $c)
     $sanitized_candidates[$c->candidateId.''] = votesmart_webform_get_candidate($c->candidateId);
 
