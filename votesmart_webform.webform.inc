@@ -44,6 +44,9 @@ function _votesmart_webform_format_name($candidate,$format = '!title !last, !fir
  *   An array of form items to be displayed on the edit component page
  */
 function _webform_edit_votesmart($component) {
+ // require_once('votesmart_webform.defines.php');
+//  global $VOTESMART_WEBFORM_US_STATES;
+
   $form = array('extra' => array());
 
   $form['extra']['zip'] = array(
@@ -53,7 +56,13 @@ function _webform_edit_votesmart($component) {
     '#default_value' => $component['extra']['zip'],
     '#element_validate' => array('_webform_edit_votesmart_default_zip_validate'),
   );
-
+  $form['extra']['state'] = array(
+    '#type' => 'select',
+    '#title' => t('Specify Default State, has no effect if zip is specified'),
+    '#weight' => 0,
+    '#default_value' => $component['extra']['state'],
+    '#options' =>array()// $VOTESMART_WEBFORM_US_STATES
+  );
   $form['extra']['hide_zip'] = array(
     '#type' => 'checkbox',
     '#title' => t('Hide Zip'),
