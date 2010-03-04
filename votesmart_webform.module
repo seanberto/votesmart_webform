@@ -15,8 +15,16 @@ function votesmart_webform_menu()
     'type' => MENU_NORMAL_ITEM,
   );
 
+  $items['admin/settings/votesmart_webform/flush_candidates'] = array(
+    'title' => 'Flush Candidate Data',
+    'page callback' => 'votesmart_webform_flush_candidates',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Flush Candidate Data - data will be refreshed via Vote Smart API when needed.',
+    'type' => MENU_NORMAL_ITEM
+  );
+
   $items['votesmart_webform/ahah/zip_changed'] = array(
-    'title' => 'AHAH Callback for Votesmart Webform',
+    'title' => 'AHAH Callback for Vote Smart Webform',
     'page callback' => 'votesmart_webform_ahah_zip_changed',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
@@ -24,6 +32,16 @@ function votesmart_webform_menu()
   );
 
   return $items;
+}
+
+function votesmart_webform_flush_candidates()
+{
+  //truncate is a non standard SQL command :(
+  db_query('DELETE FROM {votesmart_webform_candidates}');
+  $msg = '<h3>'.t('Vote Smart candidate data has been flushed').'</h3>';
+  $msg .= '<p>'.t('This data will be refreshed by the Vote Smart API when it is needed again').'</p>';
+  drupal_set_message($msg); 
+  return '';
 }
 
 function votesmart_webform_webform_component_info() {
