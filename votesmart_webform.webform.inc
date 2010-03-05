@@ -16,7 +16,6 @@ function _webform_defaults_votesmart() {
       'email' => 1,
       'allow_candidates_without_email' => 1,
       'hide_no_email_warnings' => 1,
-      'width' => '',
       'attributes' => array(),
       'name_format' => '!last, !first',
       'hide_zip' => TRUE,
@@ -104,15 +103,7 @@ function _webform_edit_votesmart($component) {
     '#title' => t('Candidate Name Format'),
     '#weight' => 0,
     '#description' => t('valid tokens include: !title !first !middle !last !nick'),
-    '#default_value' => $component['extra']['name_format'] ? $component['extra']['name_format'] : '!title !last, !first');
-
-  $form['extra']['width'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Width'),
-    '#default_value' => $component['extra']['width'],
-    '#description' => t('Width of the textfield.') .' '. t('Leaving blank will use the default size.'),
-    '#size' => 5,
-    '#maxlength' => 10,
+    '#default_value' => $component['extra']['name_format'] ? $component['extra']['name_format'] : '!title !last, !first'
   );
 
   return $form;
