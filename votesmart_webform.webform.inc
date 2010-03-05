@@ -71,6 +71,7 @@ function _webform_edit_votesmart($component) {
     '#description' => t('Leave blank if you wish to use the State dropdown on form.'),
     '#weight' => -1.1,
     '#size' => '10',
+    '#maxlength' => 10,
     '#default_value' => $component['extra']['zip'],
     '#element_validate' => array('_webform_edit_votesmart_default_zip_validate'),
   );
@@ -219,6 +220,7 @@ function _webform_render_votesmart($component, $value = NULL)
     '#title' => t('Zip'),
     '#required' => TRUE,
     '#size' => 10,
+    '#maxlength' => 10,
     '#default_value' => $component['zip'],
     '#description'   => t('Postal Code in format 12345 or 12345-1234'),
     '#element_validate' => array('_webform_edit_votesmart_zip_validate'),
