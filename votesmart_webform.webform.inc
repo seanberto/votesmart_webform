@@ -56,7 +56,7 @@ function _webform_edit_votesmart($component) {
     '#weight' => -1.2,
     '#default_value' => $component['extra']['state'],
     '#element_validate' => array('_webform_edit_votesmart_default_state_validate'),
-    '#options' => $VOTESMART_WEBFORM_US_STATES
+    '#options' => array_merge(array(''=>''),$VOTESMART_WEBFORM_US_STATES)
   );
 
   $form['extra']['hide_state'] = array(
