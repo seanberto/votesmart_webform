@@ -142,7 +142,7 @@ function _webform_edit_votesmart_zip_validate($element, &$form_state)
  * @param $element The state form element.
  * @param $form_state The full form state for the webform.
  */
-function _webform_edit_votesmart_default_zip_validate($element, &$form_state)
+function _webform_edit_votesmart_default_state_validate($element, &$form_state)
 {
   $state = $element['#value'];//alias
   if( empty($state) ) return;
