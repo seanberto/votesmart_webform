@@ -121,7 +121,6 @@ function _votesmart_webform_api($request, $args = array(), $item = null) {
 function votesmart_webform_is_us_state($state_abbr)
 {
   require_once('votesmart_webform.defines.php');
-  global $VOTESMART_WEBFORM_US_STATES;
   return isset($VOTESMART_WEBFORM_US_STATES[$state_abbr]);
 }
 
@@ -130,7 +129,6 @@ function votesmart_webform_is_us_state($state_abbr)
 function votesmart_webform_is_office_id($officeId)
 {
   require_once('votesmart_webform.defines.php');
-  global $VOTESMART_WEBFORM_OFFICE_TYPES;
   return isset($VOTESMART_WEBFORM_OFFICE_TYPES[$officeId]);
 }
 
