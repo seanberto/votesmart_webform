@@ -8,7 +8,6 @@ function votesmart_webform_menu()
     'title' => 'Vote Smart Webform',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('votesmart_webform_admin_settings'),
-    'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
     'description' => 'Configuration for Vote Smart webform.',
     'type' => MENU_NORMAL_ITEM,
@@ -44,11 +43,9 @@ function votesmart_webform_flush_candidates()
 }
 
 function votesmart_webform_webform_component_info() {
-  $components = array();
-
   //component was originally called votesmart_webform,
   //but it was too long? m got chopped off.
-  $components['votesmart'] = array(
+  return array('votesmart' => array(
     'type' => 'email',
     'label' => t('Vote Smart Lookup'),
     'description' => t('Looks up Representative for Given Zip Code'),
@@ -59,9 +56,7 @@ function votesmart_webform_webform_component_info() {
       'conditonal' => FALSE,
     ),
     'file' => 'votesmart_webform.webform.inc'
-  );
-
-  return $components;
+  ));
 }
 
 /**
@@ -163,9 +158,7 @@ function votesmart_webform_get_candidate($candidateId)
 
     $candidate_data = db_result(db_query('SELECT data FROM {votesmart_webform_candidates} WHERE candidate_id = %d LIMIT 1',array($candidateId)));
     if( $candidate_data ) //not in db
-    {
       $c = unserialize($candidate_data);
-    }
     else
     {
       $c_xml = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
@@ -180,13 +173,12 @@ function votesmart_webform_get_candidate($candidateId)
 			);
 
       foreach($vars_to_save as $var)
-			{
 				if( isset($c_xml['candidate']->$var) && !empty($c_xml['candidate']->$var) )
           $c[$var] = $c_xml['candidate']->$var.'';
-			}
 
-      foreach($c_xml['address'] as $addr)
-       $c[$addr->webAddressType.''] = $addr->webAddress.'';
+      if( is_array($c_xml['address']) )
+        foreach($c_xml['address'] as $addr)
+          $c[$addr->webAddressType.''] = $addr->webAddress.'';
 
       //insert into db
       db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,\'%s\')',array($candidateId,serialize($c)));
