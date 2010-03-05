@@ -19,13 +19,16 @@ function _webform_defaults_votesmart() {
       'width' => '',
       'attributes' => array(),
       'name_format' => '!last, !first',
-      'hide_zip' => FALSE
+      'hide_zip' => TRUE,
+      'hide_state' => FALSE
     )
   );
 }
 
 function _votesmart_webform_format_name($candidate,$format = '!last, !first')
 {
+  if( !is_array($candidate) ) return '';
+
   return t($format,array(
     '!title' => $candidate['title'],
     '!first' => $candidate['firstName'],
@@ -44,28 +47,39 @@ function _votesmart_webform_format_name($candidate,$format = '!last, !first')
  */
 function _webform_edit_votesmart($component) {
   require_once('votesmart_webform.defines.php');
-  global $VOTESMART_WEBFORM_US_STATES;
 
   $form = array('extra' => array());
+  $form['extra']['state'] = array(
+    '#type' => 'select',
+    '#title' => t('Default State'),
+    '#description' => t('Specify Default State, has no effect if zip is specified'),
+    '#weight' => -1.2,
+    '#default_value' => $component['extra']['state'],
+    '#element_validate' => array('_webform_edit_votesmart_default_state_validate'),
+    '#options' => $VOTESMART_WEBFORM_US_STATES
+  );
+
+  $form['extra']['hide_state'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Hide State on Form, don\'t allow user to change value'),
+    '#weight'  => -1.15,
+    '#default_value' => $component['extra']['hide_state']
+  );
 
   $form['extra']['zip'] = array(
     '#type' => 'textfield',
-    '#title' => t('Specify Default Zip'),
-    '#weight' => 0,
+    '#title' => t('Default Zip'),
+    '#description' => t('Leave blank if you wish to use the State dropdown on form.'),
+    '#weight' => -1.1,
+    '#size' => '10',
     '#default_value' => $component['extra']['zip'],
     '#element_validate' => array('_webform_edit_votesmart_default_zip_validate'),
   );
-  $form['extra']['state'] = array(
-    '#type' => 'select',
-    '#title' => t('Specify Default State, has no effect if zip is specified'),
-    '#weight' => 0,
-    '#default_value' => $component['extra']['state'],
-    '#options' => $VOTESMART_WEBFORM_US_STATES
-  );
+
   $form['extra']['hide_zip'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Hide Zip'),
-    '#weight'  => 0,
+    '#title' => t('Hide Zip on form, don\'t allow user to change value.'),
+    '#weight'  => -1.05,
     '#default_value' => $component['extra']['hide_zip']
   );
 
@@ -464,9 +478,6 @@ function _votesmart_webform_array_key_search($arr,$key)
   }
   return false;
 }
-
-
-
 
 function _votesmart_webform_validate_candidates($form, &$form_state, $first_run = TRUE)
 {
