@@ -21,9 +21,9 @@ function votesmart_webform_menu()
     'type' => MENU_NORMAL_ITEM
   );
 
-  $items['votesmart_webform/ahah/zip_changed'] = array(
+  $items['votesmart_webform/ahah/get_candidates'] = array(
     'title' => 'AHAH Callback for Vote Smart Webform',
-    'page callback' => 'votesmart_webform_ahah_zip_changed',
+    'page callback' => 'votesmart_webform_ahah_get_candidates',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
     'file' => 'votesmart_webform.webform.inc'
@@ -102,10 +102,11 @@ function _votesmart_webform_api($request, $args = array(), $item = null) {
   $res = drupal_http_request($url);
   $ret = (array) new SimpleXMLElement($res->data, LIBXML_NOCDATA);
 
-  // TODO check $ret['errorMessage']
+  /*
   if (isset($ret['errorMessage'])) {
     drupal_set_message(t('Vote Smart API error: %err', array('%err' => $ret['errorMessage'])), 'error');
   }
+  */
 
   // Return specified element (e.g. 'details', 'list', etc.);
   if ($item) {
@@ -120,7 +121,7 @@ function _votesmart_webform_api($request, $args = array(), $item = null) {
 
 function votesmart_webform_is_us_state($state_abbr)
 {
-  require_once('votesmart_webform.defines.php');
+  include('votesmart_webform.defines.php');
   return isset($VOTESMART_WEBFORM_US_STATES[$state_abbr]);
 }
 
@@ -128,7 +129,7 @@ function votesmart_webform_is_us_state($state_abbr)
 //keeping language the same as votesmart api
 function votesmart_webform_is_office_id($officeId)
 {
-  require_once('votesmart_webform.defines.php');
+  include('votesmart_webform.defines.php');
   return isset($VOTESMART_WEBFORM_OFFICE_TYPES[$officeId]);
 }
 
@@ -140,7 +141,7 @@ function votesmart_webform_is_zip($zip)
 
 
 
-function votesmart_webform_get_candidate($candidateId)
+function votesmart_webform_get_candidate($candidateId,$partial_candidate_xml)
 {
   
   $candidateId.='';//convert to string
@@ -155,28 +156,36 @@ function votesmart_webform_get_candidate($candidateId)
     $c = array();//candidate array
 
     $candidate_data = db_result(db_query('SELECT data FROM {votesmart_webform_candidates} WHERE candidate_id = %d LIMIT 1',array($candidateId)));
-    if( $candidate_data ) //not in db
+    if( $candidate_data )
       $c = unserialize($candidate_data);
     else
     {
       $c_xml = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
-			
+
 			$vars_to_save = array(
-			 'title',
-			 'firstName',
-			 'middleName',
-			 'lastName',
-			 'suffix',
-			 'nickName'
+        'title',
+        'firstName',
+        'middleName',
+        'lastName',
+        'suffix',
+			  'nickName',
+        'officeTypeId',
+        'officeName'
 			);
 
       foreach($vars_to_save as $var)
+      {
 				if( isset($c_xml['candidate']->$var) && !empty($c_xml['candidate']->$var) )
           $c[$var] = $c_xml['candidate']->$var.'';
+        else if( isset($partial_candidate_xml->$var) && !empty($partial_candidate_xml->$var) )
+          $c[$var] = $partial_candidate_xml->$var.'';
+      }
 
       if( is_array($c_xml['address']) )
         foreach($c_xml['address'] as $addr)
           $c[$addr->webAddressType.''] = $addr->webAddress.'';
+
+      if( empty($c) ) return false;
 
       //insert into db
       db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,\'%s\')',array($candidateId,serialize($c)));
@@ -205,12 +214,12 @@ function votesmart_webform_get_candidates_by_zip($zip)
   $sanitized_candidates = array();
 	
   foreach($candidates as $c)
-    $sanitized_candidates[$c->candidateId.''] = votesmart_webform_get_candidate($c->candidateId);
+    $sanitized_candidates[$c->candidateId.''] = votesmart_webform_get_candidate($c->candidateId,$c);
 
   return $sanitized_candidates;
 }
 
-function votesmart_webform_get_candidates_by_state($state,$officeId = NULL)
+function votesmart_webform_get_candidates_by_us_state($state,$officeId = NULL)
 {
   if( !votesmart_webform_is_us_state($state) ) return array();
 
@@ -224,14 +233,16 @@ function votesmart_webform_get_candidates_by_state($state,$officeId = NULL)
     $candidates = _votesmart_webform_api('Officials.getByOfficeState',$args,'candidate');
   }
   else
-    $candidates = _votesmart_webform_api('Officials.getStateWide',$args,'candidate');
-
-  if( is_array($candidates) ) return array();
+    $candidates = _votesmart_webform_api('Officials.getStatewide',$args,'candidate');
 
   $sanitized_candidates = array();
 	
   foreach($candidates as $c)
-    $sanitized_candidates[$c->candidateId.''] = votesmart_webform_get_candidate($c->candidateId);
+  {
+    $candidate =votesmart_webform_get_candidate($c->candidateId,$c);
+    if( $candidate )
+      $sanitized_candidates[$c->candidateId.''] = $candidate;
+  }
 
   return $sanitized_candidates;
 }
