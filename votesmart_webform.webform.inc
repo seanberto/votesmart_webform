@@ -295,21 +295,16 @@ function votesmart_webform_candidate_form_elements($args,$component)
 
   $candidates = $candidate_elements = $cand_names = array();
 
-  if( votesmart_webform_is_zip($args['zip']) )
-  {
-    $candidates = votesmart_webform_get_candidates_by_zip($zip);
-  }
-  else if( votesmart_webform_is_us_state($args['state']) )
-  {
-    $candidates = votesmart_webform_get_candidates_by_us_state($args['state']);
-  }
+  $candidates = votesmart_webform_get_candidates($args);
 
   if( empty($candidates) ) return array();
 
   if( is_array($candidates) )
   {
     foreach($candidates as $id => $c )
+    {
       $cand_names[$id] = _votesmart_webform_format_name($c,$component['extra']['name_format']);
+    }
     asort($cand_names);
   }
 
