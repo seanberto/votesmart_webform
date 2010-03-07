@@ -101,13 +101,19 @@ function _votesmart_webform_api($request, $args = array(), $item = null) {
 
   // Contact the REST API.
   $res = drupal_http_request($url);
-  $ret = (array) new SimpleXMLElement($res->data, LIBXML_NOCDATA);
-
+  try
+  {
+    $ret = (array) new SimpleXMLElement($res->data, LIBXML_NOCDATA);
+  }
+  catch(Exception $e)
+  {
+    drupal_set_message(t('Vote Smart Webform: Attempted to fetch %url -- SimpleXML error parsing %data',array('%url'=> $url, '%data'=>$res->data)),'error');
+    return false;
+  }
   /*
   if (isset($ret['errorMessage'])) {
     drupal_set_message(t('Vote Smart API error: %err', array('%err' => $ret['errorMessage'])), 'error');
-  }
-  */
+  }*/
 
   // Return specified element (e.g. 'details', 'list', etc.);
   if ($item) {
@@ -128,10 +134,10 @@ function votesmart_webform_is_us_state($state_abbr)
 
 //office types and ids are the same,
 //keeping language the same as votesmart api
-function votesmart_webform_is_office_id($officeId)
+function votesmart_webform_is_office_type($officeType)
 {
   include('votesmart_webform.defines.php');
-  return isset($VOTESMART_WEBFORM_OFFICE_TYPES[$officeId]);
+  return isset($VOTESMART_WEBFORM_OFFICE_TYPES[$officeType]);
 }
 
 
@@ -225,35 +231,28 @@ function votesmart_webform_get_candidates($args)
 {
   $args['zip'] = preg_replace('@[^\d]@','',$args['zip']);//strip non digits
 
+  $zip = $args['zip'];
+  $state = $args['state'];
+  $officeTypes = $args['officeTypes'];
+  
+  foreach($officeTypes as $k => $office_type )
+    if( !votesmart_webform_is_office_type($office_type) )
+      unset($officeTypes[$k]);
+
+  $full = $args['full'];
+
+  unset($args['full']);
+
   $query_key = serialize($args);
 
   $cached_query = db_result(db_query('SELECT response FROM {votesmart_webform_cached_queries} WHERE query = \'%s\'',$query_key));
   if( $cached_query )
-  {
     return unserialize($cached_query);
-    /*
-    $candidates = array();
-    $cand_ids = explode(';',$cached_query);
-    foreach($cand_ids as $id)
-    {
-      $candidate = votesmart_webform_get_candidate($id);
-      if( $candidate && ( !empty($candidate['Email']) || !empty($candidate['address']) ) )
-        $candidates[$id] = $candidate;
-    }
-    return $candidates;
-    */
-  }
-
-  $zip = $args['zip'];
-  $state = $args['state'];
-  $officeId = $args['officeId'];
-  $full = $args['full'];
 
   $args = array();//set this to empty array as it is used later
 
   if( votesmart_webform_is_zip($zip) )
   {
-
     $args = array('zip5' => substr($zip,0,5) );
     if( strlen($zip) == 9 )
       $args['zip4'] = substr($zip,5,9);
@@ -262,18 +261,8 @@ function votesmart_webform_get_candidates($args)
   }
   else if( votesmart_webform_is_us_state($state) )
   {
-    if( isset($officeId) && !votesmart_webform_is_office_id($officeId) )
-      $officeId = NULL;
-
     $args = array('stateId' => $state );
-    if( isset($officeId) && votesmart_webform_is_office_id($officeId) )
-      $args['officeId'] = $officeId;
-
-    if( isset($args['officeId']) )
-      $candidates = _votesmart_webform_api('Officials.getByOfficeState',$args,'candidate');
-    else
-      $candidates = _votesmart_webform_api('Officials.getStatewide',$args,'candidate');
-      
+    $candidates = _votesmart_webform_api('Officials.getStatewide',$args,'candidate');
   }
   else return array();
 
@@ -281,17 +270,18 @@ function votesmart_webform_get_candidates($args)
 	
   if( is_array($candidates) )
   {
+    $do_office_check = !empty($officeTypes) && is_array($officeTypes);
     foreach($candidates as $c)
     {
       $candidate = votesmart_webform_get_candidate($c->candidateId,$c,$full);
-      if( !empty($candidate) )
-        $sanitized_candidates[$c->candidateId.''] = $candidate;
+      if( empty($candidate) ) continue;
+      if( $do_office_check && !in_array($candidate['officeTypeId'],$officeTypes) )
+        continue;
+      $sanitized_candidates[$c->candidateId.''] = $candidate;
     }
-  }
+   db_query('INSERT INTO {votesmart_webform_cached_queries} (query,response) values (\'%s\',\'%s\')',$query_key,serialize($sanitized_candidates));
+ }
 
-
-  db_query('INSERT INTO {votesmart_webform_cached_queries} (query,response) values (\'%s\',\'%s\')',$query_key,serialize($sanitized_candidates));
-  //db_query('INSERT INTO {votesmart_webform_cached_queries} (query,response) values (\'%s\',\'%s\')',$query_key,implode(';',array_keys($sanitized_candidates)));
   return $sanitized_candidates;
 }
 
