@@ -589,7 +589,7 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
 
   if( empty($votesmart['candidates']) )
   {
-    form_set_error('votesmart','no officials selected');
+    form_set_error('votesmart',t('Please select one or more officials.'));
   }
 
   $candidates = element_children($votesmart['candidates']);//alias
