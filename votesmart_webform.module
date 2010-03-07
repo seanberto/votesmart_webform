@@ -142,9 +142,8 @@ function votesmart_webform_is_zip($zip)
 
 
 
-function votesmart_webform_get_candidate($candidateId,$partial_candidate_xml = NULL)
+function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $full = true)
 {
-  
   $candidateId.='';//convert to string
 
   static $candidates;//cache candidates
@@ -156,20 +155,35 @@ function votesmart_webform_get_candidate($candidateId,$partial_candidate_xml = N
   {
     $c = array();//candidate array
 
-    $candidate_data = db_result(db_query('SELECT data FROM {votesmart_webform_candidates} WHERE candidate_id = %d LIMIT 1',array($candidateId)));
+    //only hit the database if we need more than the name
+    //or haven't been provided any info
+    if( $full || empty($partial_candidate_xml))
+      $candidate_data = db_result(db_query('SELECT data FROM {votesmart_webform_candidates} WHERE candidate_id = %d LIMIT 1',array($candidateId)));
     if( $candidate_data )
+    {
       $c = unserialize($candidate_data);
+    }
     else
     {
       //not scoped so we have opportunity to fix candidate name
       //if it is missing from partial $partial_candidate_xml
-      $c_xml_web = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
-      $c_xml_addr = _votesmart_webform_api('Address.getOffice',array('candidateId'=>$candidateId),'office');
+
+      if( $full )
+      {
+        $c_xml_web = _votesmart_webform_api('Address.getOfficeWebAddress',array('candidateId'=>$candidateId));
+        $c_xml_addr = _votesmart_webform_api('Address.getOffice',array('candidateId'=>$candidateId),'office');
+      }
+
       //officials can have multiple offices listed,
       //we are only saving the first one
       if( isset($c_xml_addr[0]->address) )
       {
-        $c['address'] = (array) $c_xml_addr[0]->address;
+        foreach($c_xml_addr[0]->address as $k => $v)
+        {
+          $v = trim($v);
+          if( !empty($v) )
+            $c['address'][$k] = $v;
+        }
       }
 
 			$vars_to_save = array(
@@ -197,7 +211,8 @@ function votesmart_webform_get_candidate($candidateId,$partial_candidate_xml = N
 
       if( empty($c) ) return false;
 
-      @db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,\'%s\')',$candidateId,serialize($c));
+      if( $full )
+        @db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,\'%s\')',$candidateId,serialize($c));
     }
 
     $candidates[$candidateId] = $c;
@@ -215,20 +230,25 @@ function votesmart_webform_get_candidates($args)
   $cached_query = db_result(db_query('SELECT response FROM {votesmart_webform_cached_queries} WHERE query = \'%s\'',$query_key));
   if( $cached_query )
   {
-    $cand_ids = explode(';',$cached_query);
+    return unserialize($cached_query);
+    /*
     $candidates = array();
+    $cand_ids = explode(';',$cached_query);
     foreach($cand_ids as $id)
     {
       $candidate = votesmart_webform_get_candidate($id);
       if( $candidate && ( !empty($candidate['Email']) || !empty($candidate['address']) ) )
         $candidates[$id] = $candidate;
     }
-    return $candidates; 
+    return $candidates;
+    */
   }
 
   $zip = $args['zip'];
   $state = $args['state'];
   $officeId = $args['officeId'];
+  $full = $args['full'];
+
   $args = array();//set this to empty array as it is used later
 
   if( votesmart_webform_is_zip($zip) )
@@ -263,16 +283,15 @@ function votesmart_webform_get_candidates($args)
   {
     foreach($candidates as $c)
     {
-      $candidate = votesmart_webform_get_candidate($c->candidateId,$c);
-      if( $candidate && ( !empty($candidate['Email']) || !empty($candidate['address']) ) )
-      {
+      $candidate = votesmart_webform_get_candidate($c->candidateId,$c,$full);
+      if( !empty($candidate) )
         $sanitized_candidates[$c->candidateId.''] = $candidate;
-      }
     }
   }
 
-  db_query('INSERT INTO {votesmart_webform_cached_queries} (query,response) values (\'%s\',\'%s\')',$query_key,implode(';',array_keys($sanitized_candidates)));
 
+  db_query('INSERT INTO {votesmart_webform_cached_queries} (query,response) values (\'%s\',\'%s\')',$query_key,serialize($sanitized_candidates));
+  //db_query('INSERT INTO {votesmart_webform_cached_queries} (query,response) values (\'%s\',\'%s\')',$query_key,implode(';',array_keys($sanitized_candidates)));
   return $sanitized_candidates;
 }
 

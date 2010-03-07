@@ -17,7 +17,7 @@ function _webform_defaults_votesmart() {
       'allow_candidates_without_email' => 1,
       'hide_no_email_warnings' => 1,
       'attributes' => array(),
-      'name_format' => '!last, !first',
+      'name_format' => '!last !suffix, !first',
       'zip' => '',
       'hide_zip' => TRUE,
       'state' => '',
@@ -26,17 +26,22 @@ function _webform_defaults_votesmart() {
   );
 }
 
-function _votesmart_webform_format_name($candidate,$format = '!last, !first')
+function _votesmart_webform_format_name($candidate,$format = '!last !suffix, !first')
 {
   if( !is_array($candidate) ) return '';
 
-  return t($format,array(
+  $name = t($format,array(
     '!title' => $candidate['title'],
     '!first' => $candidate['firstName'],
     '!last' =>  $candidate['lastName'],
+    '!suffix' => $candidate['suffix'],
     '!middle' => $candidate['middleName'],
     '!nick' => $candidate['nickName']
   ));
+  $name = trim($name);
+  $name = preg_replace('@ +@', ' ', $name);
+  $name = str_replace(' ,',',',$name);
+  return $name;
 }
 
 /**
@@ -105,8 +110,8 @@ function _webform_edit_votesmart($component) {
     '#type' => 'textfield',
     '#title' => t('Candidate Name Format'),
     '#weight' => 0,
-    '#description' => t('valid tokens include: !title !first !middle !last !nick'),
-    '#default_value' => $component['extra']['name_format'] ? $component['extra']['name_format'] : '!title !last, !first'
+    '#description' => t('valid tokens include: !title !first !middle !last !suffix !nick ... extra spaces are trimmed'),
+    '#default_value' => $component['extra']['name_format']
   );
 
   return $form;
@@ -438,6 +443,8 @@ function votesmart_webform_ahah_get_candidates()
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
   $args = $form['#parameters'];
+  if( !is_array($args) ) return drupal_json(array('status'=> FALSE, 'data' => ''));
+
   $form_id = array_shift($args);
   $form['#post'] = $form_state['post'] = $_POST;
   $form['#redirect'] = $form['#programmed'] = FALSE;
