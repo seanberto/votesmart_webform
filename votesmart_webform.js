@@ -8,7 +8,7 @@ function votesmart_webform_update_candidate( $candidate, $selected_candidates )
 
   if( $t.filter(':checked').length == 1 )
   {
-    $selected_candidate = $('<a href="#" title="uncheck candidate" id="'+ selected_id+'">'+ label +'; </a>');
+    $selected_candidate = $('<a href="#" title="uncheck '+label+'" id="'+ selected_id+'">'+ label +'; </a>');
     $selected_candidate.click(function(){
       $candidate.attr('checked','');
       $(this).remove();
@@ -28,7 +28,7 @@ function votesmart_webform_candidate_wrapper( $candidate_wrapper )
     $selected_candidates = $('<div class="votesmart-webform-selected-candidates" />');
     $selected_candidates_wrapper = $('<div class="form-item">');
 
-    $selected_candidates_wrapper.append('<label>Selected Candidates:</label>');
+    $selected_candidates_wrapper.append('<label>Selected Officials:</label>');
     $selected_candidates_wrapper.append($selected_candidates);
 
     $candidate_wrapper.after($selected_candidates_wrapper);
