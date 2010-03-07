@@ -4,11 +4,11 @@ function votesmart_webform_update_candidate( $candidate, $selected_candidates )
   var $t = $candidate;
 
   var selected_id = 'selected-'+ $t.attr('name').match(/\d+/)[0];
-  var label = $t.parent().text();
+  var label = $.trim($t.parent().text());
 
   if( $t.filter(':checked').length == 1 )
   {
-    $selected_candidate = $('<a href="#" title="uncheck '+label+'" id="'+ selected_id+'">'+ label +'; </a>');
+    $selected_candidate = $('<span><a href="#" title="uncheck '+label+'" id="'+ selected_id+'">'+ label +'</a>; </span>');
     $selected_candidate.click(function(){
       $candidate.attr('checked','');
       $(this).remove();
