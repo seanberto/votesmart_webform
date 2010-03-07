@@ -8,7 +8,7 @@ function votesmart_webform_update_candidate( $candidate, $selected_candidates )
 
   if( $t.filter(':checked').length == 1 )
   {
-    $selected_candidate = $('<span><a href="#" title="uncheck '+label+'" id="'+ selected_id+'">'+ label +'</a>; </span>');
+    $selected_candidate = $('<span id="'+selected_id+'"><a href="#" title="uncheck '+label+'">'+ label +'</a>; </span>');
     $selected_candidate.click(function(){
       $candidate.attr('checked','');
       $(this).remove();
@@ -44,23 +44,33 @@ jQuery(function(){
   $components = $('.webform-component-votesmart');
 
   $components.each(function(){
-    $component = $(this);
+    var $component = $(this);
+    var $form = $component.parents('form:first');
+    var $zip = $component.find('input[name~=zip]');
+    var $state = $component.find('select[name~=state]');
+    var no_candidates_present = $component.find('.votesmart-webform-candidate-wrapper').length < 1
 
-    $zip = $component.find('input[name~=zip]');
 
     //if the zip field has a value and we don't have any candidates
     //trigger change so we can search for candidates
-    if( $zip.length == 1
-        && $zip.val().match(/\d+/)
-        && $component.find('.votesmart-webform-candidate-wrapper').length < 1
-    )
+    if( no_candidates_present )
     {
-      $zip.trigger('change');
+      if( $zip.length == 1 && $zip.val().match(/\d+/) )
+        $zip.trigger('change');
+      else if( $state.length == 1 && $state.val().length == 2)
+        $state.trigger('change');
     }
 
 
 
     $candidate_wrapper = $component.find('.votesmart-webform-candidate-wrapper');
+    $form.bind('submit',function(){
+      var has_candidate_checked = $candidate_wrapper.find('input:checked').length > 0;
+      if( !has_candidate_checked )
+        alert('Please select one or more officials.');
+      return has_candidate_checked;
+    });
+
     window.setTimeout(function(){
      votesmart_webform_candidate_wrapper($candidate_wrapper)
     },500);
