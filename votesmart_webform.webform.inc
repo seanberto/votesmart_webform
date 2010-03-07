@@ -219,11 +219,6 @@ function _webform_render_votesmart($component, $value = NULL)
 {
   include('votesmart_webform.defines.php');
 
-  $path = drupal_get_path('module','votesmart_webform');
-
-  drupal_add_css($path.'/votesmart_webform.css','module','all',0);
-  drupal_add_js($path.'/votesmart_webform.js','module','header',0,1,0);
-
   if( !empty($value) )
     $value = unserialize($value[0]);
 
@@ -282,7 +277,7 @@ function _webform_render_votesmart($component, $value = NULL)
     $form['votesmart']['state'] = array(
       '#type' => 'select',
       '#title' => t('State'),
-      '#options' => $VOTESMART_WEBFORM_US_STATES,
+      '#options' => array_merge(array(''=>''),$VOTESMART_WEBFORM_US_STATES),
       '#multiple' => false,
       '#required' => TRUE,
       '#default_value' => $component['extra']['state'],
@@ -537,6 +532,7 @@ function votesmart_webform_ahah_get_candidates()
 
 function votesmart_webform_form_alter(&$form, $form_state, $form_id)
 {
+
   if( preg_match('@webform_(.*)@',$form_id,$matches) )
   {
     if( $votesmart = _votesmart_webform_element_children_search($form,'votesmart') )
@@ -608,5 +604,5 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
   }//if is_array
   
   if( $error )
-    form_set_error('votesmart',t('Please select a candidate'));
+    form_set_error('votesmart',t('Please select one or more officials.'));
 }

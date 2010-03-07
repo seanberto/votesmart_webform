@@ -32,6 +32,13 @@ function votesmart_webform_menu()
   return $items;
 }
 
+function votesmart_webform_init()
+{
+  $path = drupal_get_path('module','votesmart_webform');
+  drupal_add_css($path.'/votesmart_webform.css','module');
+  drupal_add_js($path.'/votesmart_webform.js','module');
+}
+
 function votesmart_webform_flush_candidates()
 {
   //truncate is a non standard SQL command :(

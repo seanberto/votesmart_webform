@@ -65,6 +65,8 @@ jQuery(function(){
 
     $candidate_wrapper = $component.find('.votesmart-webform-candidate-wrapper');
     $form.bind('submit',function(){
+      $candidate_wrapper = $(this).find('.votesmart-webform-candidate-wrapper');
+
       var has_candidate_checked = $candidate_wrapper.find('input:checked').length > 0;
       if( !has_candidate_checked )
         alert('Please select one or more officials.');
