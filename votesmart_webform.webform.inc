@@ -305,10 +305,9 @@ function _webform_render_votesmart($component, $value = NULL)
   if( !empty($component['extra']['office_types']) )
     $office_types = $component['extra']['office_types'];
 
-  $candidates = array();
   if( !empty($office_types) && is_array($office_types) )
   {
-      $candidates = array_merge($candidates,votesmart_webform_candidate_form_elements(array('state' => $state,'zip'=> $zip,'officeTypes'=> $office_types),$component,$form['votesmart']['jumper']));
+      $candidates = votesmart_webform_candidate_form_elements(array('state' => $state,'zip'=> $zip,'officeTypes'=> $office_types),$component,$form['votesmart']['jumper']);
   }
   else
     $candidates = votesmart_webform_candidate_form_elements(array('state' => $state,'zip'=> $zip),$component);
@@ -365,7 +364,6 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
   asort($cand_names);
   foreach($cand_names as $office => $cands )
   {
-    asort($cand_names[$office]);
     $anchor_name = 'votesmart-webform-office-type-'.strtolower($office);
     $office_label = t($VOTESMART_WEBFORM_OFFICE_TYPES[$office]);
     if( $needs_jumper )
@@ -374,38 +372,39 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
       '#type'=>'markup',
       '#value' => '<h4><a name="'.$anchor_name.'">'.$office_label.'</a></h4>'
     );
-  foreach($cand_names[$office] as $cand_id => $cand_name )
-  {
-    $element = array(
-      '#type' => 'checkbox',
-      '#title' => $cand_name,
-    );
-
-    if( !$component['extra']['hide_no_email_warnings'] && !isset($candidates[$cand_id]['Email']) )
+    asort($cands);
+    foreach($cands as $cand_id => $cand_name )
     {
-      if( !$component['extra']['allow_candidates_without_email'] )
-        $element['#disabled'] = true;
-      $element['#description'] = t('No email found for !candidate.',array('!candidate'=>$cand_name));
-      if( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) )
-      {
-        if( isset($candidates[$cand_id]['Webmail']) )
+      $element = array(
+        '#type' => 'checkbox',
+        '#title' => $cand_name,
+      );
+
+      if( !$component['extra']['hide_no_email_warnings'] && !isset($candidates[$cand_id]['Email']) )
+      {     
+        if( !$component['extra']['allow_candidates_without_email'] )
+          $element['#disabled'] = true;
+        $element['#description'] = t('No email found for !candidate.',array('!candidate'=>$cand_name));
+
+        if( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) )
         {
-          $website = $candidates[$cand_id]['Webmail'];
-        }
-        else
-          $website = $candidates[$cand_id]['Website'];
+          if( isset($candidates[$cand_id]['Webmail']) )
+          {       
+            $website = $candidates[$cand_id]['Webmail'];
+          }      
+          else
+            $website = $candidates[$cand_id]['Website'];
 
-        $element['#description'] = t('No email found for !candidate. Try contacting them at <a target="_blank" rel="nofollow" href="!website">their&nbsp;website</a>.',array(
-          '!candidate'=>$cand_name,
-          '!website' => $website
-        ));
+          $element['#description'] = t('No email found for !candidate. Try contacting them at <a target="_blank" rel="nofollow" href="!website">their&nbsp;website</a>.',array(
+            '!candidate'=>$cand_name,
+            '!website' => $website
+          ));
 
+        }  
       }
+
+      $candidate_elements[$cand_id] = $element;
     }
-
-
-    $candidate_elements[$cand_id] = $element;
-  }
   }//foreach 
 
   if( $needs_jumper )
@@ -444,12 +443,10 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
 function _webform_display_votesmart($component, $value, $format = 'html') {
   if( empty($value) ) return array();
   $ret = array(
+    '#prefix' => '<fieldset><legend>'.t($component['name']).'</legend>',
+    '#suffix' => '</fieldset>',
     '#weight' => $component['weight'],
     '#theme' => 'markup',
-    '#theme_wrappers' => $format == 'html' ? array('webform_element') : array('webform_element_text'),
-    '#post_render' => array('webform_element_wrapper'),
-    '#component' => $component,
-    '#format' => $format,
   );
 
   $value = unserialize($value[0]);
@@ -467,8 +464,12 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
         $cand_names[] = _votesmart_webform_format_name($c,$component['extra']['name_format']).' '.l($c['Email'],'mailto:'.$c['Email']);
     }//foreach
   }//if is_array
-  $o = t('Zip').': '.$value['votesmart']['zip'].'<br />';
-  $o .= t('Candidates Selected').': <ul><li>'.implode('</li><li>',$cand_names).'</li></ul>';
+  $o = '';
+  if( !empty($value['votesmart']['state']) )
+    $o = t('State').': '.$value['votesmart']['state'].'<br />';
+  if( !empty($value['votesmart']['zip']) )
+    $o = t('Zip').': '.$value['votesmart']['zip'].'<br />';
+  $o .= t('Officials Selected').': <ul><li>'.implode('</li><li>',$cand_names).'</li></ul>';
 
   $ret['#value'] = $o;
   
