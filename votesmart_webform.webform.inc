@@ -579,6 +579,9 @@ function _votesmart_webform_array_key_search($arr,$key)
 function _votesmart_webform_validate_candidates($form, &$form_state, $first_run = TRUE)
 {
   $votesmart = _votesmart_webform_element_children_search($form,'votesmart');
+  if( isset($votesmart['votesmart'] ) )
+    $votesmart = $votesmart['votesmart'];
+
   if( ( isset($votesmart['zip']) && form_get_error($votesmart['zip']) )
       || ( isset($votesmart['state']) && form_get_error($votesmart['state']) )
   )
