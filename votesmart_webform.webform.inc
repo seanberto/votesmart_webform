@@ -1,4 +1,6 @@
 <?php
+// $Id
+
 /**
  * Specify the default properties of votesmart_webform component
  *
