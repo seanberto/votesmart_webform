@@ -75,7 +75,7 @@ function _webform_edit_votesmart($component) {
 
   $form['extra']['office_types'] = array(
     '#type' => 'select',
-    '#multiple' => true,
+    '#multiple' => TRUE,
     '#title' => t('Default Office(s)'),
     '#description' => t('Show only officials in these offices. If you all offices leave this blank.'),
     '#weight' => -1.2,
@@ -115,7 +115,6 @@ function _webform_edit_votesmart($component) {
     '#weight'  => 0,
     '#default_value' => $component['extra']['allow_candidates_without_email']
   );
-
 
   $form['extra']['hide_no_email_warnings'] = array(
     '#type' => 'checkbox',
@@ -278,7 +277,7 @@ function _webform_render_votesmart($component, $value = NULL)
       '#type' => 'select',
       '#title' => t('State'),
       '#options' => array_merge(array(''=>''),$VOTESMART_WEBFORM_US_STATES),
-      '#multiple' => false,
+      '#multiple' => FALSE,
       '#required' => TRUE,
       '#default_value' => $component['extra']['state'],
       '#element_validate' => array('_webform_edit_votesmart_state_validate'),
@@ -383,7 +382,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
       if( !$component['extra']['hide_no_email_warnings'] && !isset($candidates[$cand_id]['Email']) )
       {     
         if( !$component['extra']['allow_candidates_without_email'] )
-          $element['#disabled'] = true;
+          $element['#disabled'] = TRUE;
         $element['#description'] = t('No email found for !candidate.',array('!candidate'=>$cand_name));
 
         if( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) )
@@ -457,9 +456,9 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
     $ret['#suffix'] = '</fieldset>';
   }
 
-  $value = unserialize($value[0]);
+  $value[0] = unserialize($value[0]);
 
-  $candidates = $value['votesmart']['candidates'];
+  $candidates = $value[0]['votesmart']['candidates'];
   if( !$candidates ) $candidates = array();
   $cand_names = array();
 
@@ -481,15 +480,19 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
     }//foreach
   }//if is_array
   $o = '';
-  if( !empty($value['votesmart']['state']) )
+
+
+  if( !empty($value[0]['votesmart']['state']) )
   {
-    $o = t('State').': '.$value['votesmart']['state'].'<br />'."\r\n";
+    $o = t('State').': '.$value[0]['votesmart']['state'].'<br />'."\r\n";
   }
 
-  if( !empty($value['votesmart']['zip']) )
+  if( !empty($value[0]['votesmart']['zip']) )
   {
-    $o = t('Zip').': '.$value['votesmart']['zip'].'<br />'."\r\n";
+    $o = t('Zip').': '.$value[0]['votesmart']['zip'].'<br />'."\r\n";
   }
+
+  unset($value[0]);
 
   $o .= t('Officials Selected').': ';
 
@@ -497,6 +500,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   {
     $o .= "\r\n".implode("\r\n",$cand_names)."\r\n";
     $ret['#value'] = strip_tags($o);
+    return array();//hack to keep this out of emails
     return $ret;//must return an array
   }
   else
@@ -516,18 +520,33 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
 
 /**
  * Implementation of _webform_submit_component().
+ *
+ * NOTE: When webform sends out emails it will loop
+ * through the returned array, validating the emails;
+ * If the email is valid webform will send an email.
  */
 function _webform_submit_votesmart($component, &$value)
 {
-  if( empty($value) || !is_array($value['votesmart']['candidates']) ) return null;
+  if( empty($value) || !is_array($value['votesmart']['candidates']) ) return NULL;
+
+  $ret = array(0 => ''); //placeholder for serialized value
   foreach($value['votesmart']['candidates'] as $cand_id => $checked)
   {
     if( !$checked )
+    {
       unset($value['votesmart']['candidates'][$cand_id]);
+    }
+    else
+    {
+      $candidate = votesmart_webform_get_candidate($cand_id,NULL,TRUE);
+      if( !empty($candidate['Email']) )
+      {
+        $ret[] = $candidate['Email'];
+      }
+    }
   }
-
-  $value = serialize($value);
-  return $value;
+  $ret[0] = serialize($value);
+  return $ret;
 }
 
 
@@ -587,31 +606,31 @@ function _votesmart_webform_element_children_search($form,$key)
   $found = array_search($key,$element_children);
   if( $found ) return $form[$key];
 
-  if( !is_array($element_children) ) return false;
+  if( !is_array($element_children) ) return FALSE;
 
   foreach($element_children as $e)
   {
     $result = _votesmart_webform_element_children_search($form[$e],$key);
-    if( $result != false ) return $result;
+    if( $result != FALSE ) return $result;
   }
-  return false;
+  return FALSE;
 }
 
 function _votesmart_webform_array_key_search($arr,$key)
 {
-  if( !is_array($arr) ) return false;
+  if( !is_array($arr) ) return FALSE;
 
   $found = array_key_exists($key,$arr);
   if( $found ) return $arr[$key];
 
-  if( !is_array($arr) ) return false;
+  if( !is_array($arr) ) return FALSE;
 
   foreach($arr as $e)
   {
     $result = _votesmart_webform_array_key_search($e,$key);
-    if( $result != false ) return $result;
+    if( $result != FALSE ) return $result;
   }
-  return false;
+  return FALSE;
 }
 
 function _votesmart_webform_validate_candidates($form, &$form_state, $first_run = TRUE)
@@ -632,14 +651,14 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
 
   $candidates = element_children($votesmart['candidates']);//alias
 
-  $error = true;
+  $error = TRUE;
   if( is_array($candidates) )
   {
     foreach( $candidates as $cand_id )
     {
       if( $votesmart['candidates'][$cand_id]['#value'] == 1 )
       {
-        $error = false;
+        $error = FALSE;
         break;
       }
     }//foreach
