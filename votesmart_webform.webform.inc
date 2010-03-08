@@ -471,6 +471,8 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
     $o = t('Zip').': '.$value['votesmart']['zip'].'<br />';
   $o .= t('Officials Selected').': <ul><li>'.implode('</li><li>',$cand_names).'</li></ul>';
 
+  if( $format == 'table-cell' ) return $o;
+
   $ret['#value'] = $o;
   
   return $ret;
@@ -610,3 +612,38 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
   if( $error )
     form_set_error('votesmart',t('Please select one or more officials.'));
 }
+
+/**
+ * Implementation of _webform_table_component().
+ */
+function _webform_table_votesmart($component, $value) {
+  return _webform_display_votesmart($component, $value,'table-cell');
+}
+
+
+/**
+ * Implementation of _webform_csv_headers_component().
+ */
+function _webform_csv_headers_votesmart($component, $export_options) {
+  return array(
+    0 => array('','',''),
+    1 => array($component['name'],$component['name'],$component['name']),
+    2 => array('State','Zip','Selected Officials')
+  );
+}
+
+/**
+ * Implementation of _webform_csv_data_component().
+ */
+function _webform_csv_data_votesmart($component, $export_options, $value) {
+  if( !isset($value[0]) ) return '';
+
+  $v = unserialize($value[0]);
+  $v = $v['votesmart'];
+  return array(
+    $v['state'],
+    $v['zip'],
+    implode(';',array_keys($v['candidates']))
+  );
+}
+

@@ -58,10 +58,11 @@ function votesmart_webform_webform_component_info() {
     'label' => t('Vote Smart Lookup'),
     'description' => t('Looks up Representative for Given Zip Code'),
     'features' => array(
-      'csv' => FALSE,
-      'email' => FALSE,
-      'required' => TRUE,
-      'conditonal' => FALSE,
+      'csv' => TRUE, // Add content to CSV downloads.
+      'email' => FALSE,// Show this field in e-mailed submissions.
+      'email_address' => TRUE, // Allow this field to be used as an e-mail FROM or TO address.
+      'email_name' =>FALSE,// Allow this field to be used as an e-mail SUBJECT or FROM name.
+      'required' => TRUE,// This field may be toggled as required or not.
     ),
     'file' => 'votesmart_webform.webform.inc'
   ));
