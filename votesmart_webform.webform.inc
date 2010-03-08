@@ -497,8 +497,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   {
     $o .= "\r\n".implode("\r\n",$cand_names)."\r\n";
     $ret['#value'] = strip_tags($o);
-    return '';//TODO: This is a hack. Webform currently submits all content to email. We do not want this to show up in emails.
-    return $ret;
+    return $ret;//must return an array
   }
   else
   {
