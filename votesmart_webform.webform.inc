@@ -441,13 +441,21 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
  *   (such as wrapping the text) or as HTML (ensuring consistent output).
  */
 function _webform_display_votesmart($component, $value, $format = 'html') {
-  if( empty($value) ) return array();
+  if( !in_array($format,array('html','table-cell','text')) || empty($value) )
+  {
+    return '';
+  }
+
   $ret = array(
-    '#prefix' => '<fieldset><legend>'.t($component['name']).'</legend>',
-    '#suffix' => '</fieldset>',
     '#weight' => $component['weight'],
     '#theme' => 'markup',
   );
+
+  if( $format == 'html' )
+  {
+    $ret['#prefix'] = '<fieldset><legend>'.t($component['name']).'</legend>';
+    $ret['#suffix'] = '</fieldset>';
+  }
 
   $value = unserialize($value[0]);
 
@@ -461,20 +469,48 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
     {
       $c = votesmart_webform_get_candidate($cand_id);
       if( $checked ) //sanity check
-        $cand_names[] = _votesmart_webform_format_name($c,$component['extra']['name_format']).' '.l($c['Email'],'mailto:'.$c['Email']);
+      {
+        $name = _votesmart_webform_format_name($c,$component['extra']['name_format']);
+        if( !empty($c['Email']) )
+        {
+          $e = $c['Email'];
+          $name .= $format == 'text' ? ' '.$e : ' '.l($e,'mailto:'.$e);
+        }
+        $cand_names[] = $name;
+      }
     }//foreach
   }//if is_array
   $o = '';
   if( !empty($value['votesmart']['state']) )
-    $o = t('State').': '.$value['votesmart']['state'].'<br />';
+  {
+    $o = t('State').': '.$value['votesmart']['state'].'<br />'."\r\n";
+  }
+
   if( !empty($value['votesmart']['zip']) )
-    $o = t('Zip').': '.$value['votesmart']['zip'].'<br />';
-  $o .= t('Officials Selected').': <ul><li>'.implode('</li><li>',$cand_names).'</li></ul>';
+  {
+    $o = t('Zip').': '.$value['votesmart']['zip'].'<br />'."\r\n";
+  }
 
-  if( $format == 'table-cell' ) return $o;
+  $o .= t('Officials Selected').': ';
 
+  if( $format == 'text' )
+  {
+    $o .= "\r\n".implode("\r\n",$cand_names)."\r\n";
+    $ret['#value'] = strip_tags($o);
+    return $ret;
+  }
+  else
+  {
+    $o .= '<ul><li>'.implode('</li><li>',$cand_names).'</li></ul>';
+  }
+
+  if( $format == 'table-cell' )
+  {
+    return $o;
+  }
+ 
   $ret['#value'] = $o;
-  
+
   return $ret;
 }
 
