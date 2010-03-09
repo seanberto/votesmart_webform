@@ -210,7 +210,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
 
       if( $full )
       {
-        cache_set('votesmart_webform-candidate-'.$candidateId,$c);
+        cache_set('votesmart_webform-candidate-'.$candidateId,$c,'cache',CACHE_TEMPORARY);
       }
     }
 
@@ -280,7 +280,7 @@ function votesmart_webform_get_candidates($args)
         continue;
       $sanitized_candidates[$c->candidateId.''] = $candidate;
     }
-    cache_set($query_key,$sanitized_candidates);
+    cache_set($query_key,$sanitized_candidates,'cache',CACHE_TEMPORARY);
  }
 
   return $sanitized_candidates;
