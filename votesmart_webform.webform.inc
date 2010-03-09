@@ -246,6 +246,10 @@ function _webform_render_votesmart($component, $value = NULL)
   $votesmart_post = _votesmart_webform_array_key_search($_POST,'votesmart');
   if( $votesmart_post )
   {
+    if( isset($votesmart_post['votesmart']) )
+    {
+      $votesmart_post = $votesmart_post['votesmart'];
+    }
     $component['extra']['zip'] = $votesmart_post['zip'];
     $component['extra']['state'] = $votesmart_post['state'];
     $component['extra']['office_types'] = $votesmart_post['office_types'];
