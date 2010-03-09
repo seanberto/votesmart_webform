@@ -15,14 +15,6 @@ function votesmart_webform_menu()
     'type' => MENU_NORMAL_ITEM,
   );
 
-  $items['admin/settings/votesmart_webform/flush_candidates'] = array(
-    'title' => 'Flush Candidate Data',
-    'page callback' => 'votesmart_webform_flush_candidates',
-    'access arguments' => array('administer site configuration'),
-    'description' => 'Flush Candidate Data - data will be refreshed via Vote Smart API when needed.',
-    'type' => MENU_NORMAL_ITEM
-  );
-
   $items['votesmart_webform/ahah/get_candidates'] = array(
     'title' => 'AHAH Callback for Vote Smart Webform',
     'page callback' => 'votesmart_webform_ahah_get_candidates',
@@ -39,17 +31,6 @@ function votesmart_webform_init()
   $path = drupal_get_path('module','votesmart_webform');
   drupal_add_css($path.'/votesmart_webform.css','module');
   drupal_add_js($path.'/votesmart_webform.js','module');
-}
-
-function votesmart_webform_flush_candidates()
-{
-  //truncate is a non standard SQL command :(
-  db_query('DELETE FROM {votesmart_webform_candidates}');
-  db_query('DELETE FROM {votesmart_webform_cached_queries}');
-  $msg = '<h3>'.t('Vote Smart candidate data has been flushed').'</h3>';
-  $msg .= '<p>'.t('This data will be refreshed by the Vote Smart API when it is needed again').'</p>';
-  drupal_set_message($msg); 
-  return '';
 }
 
 function votesmart_webform_webform_component_info() {
@@ -174,12 +155,12 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
     //only hit the database if we need more than the name
     //or haven't been provided any info
     if( $full || empty($partial_candidate_xml))
-      $candidate_data = db_result(db_query('SELECT data FROM {votesmart_webform_candidates} WHERE candidate_id = %d LIMIT 1',array($candidateId)));
-    if( $candidate_data )
     {
-      $c = unserialize($candidate_data);
+      $candidate_data = cache_get('votesmart_webform-candidate-'.$candidateId);
+      $c = $candidate_data->data;
     }
-    else
+
+    if( !$candidate_data )
     {
       //not scoped so we have opportunity to fix candidate name
       //if it is missing from partial $partial_candidate_xml
@@ -228,7 +209,9 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
       if( empty($c) ) return false;
 
       if( $full )
-        @db_query('INSERT INTO {votesmart_webform_candidates} (candidate_id, data) values (%d,\'%s\')',$candidateId,serialize($c));
+      {
+        cache_set('votesmart_webform-candidate-'.$candidateId,$c);
+      }
     }
 
     $candidates[$candidateId] = $c;
@@ -244,20 +227,28 @@ function votesmart_webform_get_candidates($args)
   $zip = $args['zip'];
   $state = $args['state'];
   $officeTypes = $args['officeTypes'];
-  
-  foreach($officeTypes as $k => $office_type )
-    if( !votesmart_webform_is_office_type($office_type) )
-      unset($officeTypes[$k]);
+  if( is_array($officeTypes) )
+  {
+    foreach($officeTypes as $k => $office_type )
+    {
+      if( !votesmart_webform_is_office_type($office_type) )
+      {
+        unset($officeTypes[$k]);
+      }
+    }
+  }
 
   $full = $args['full'];
 
   unset($args['full']);
 
-  $query_key = serialize($args);
+  $query_key = 'votesmart_webform-'.serialize($args);
 
-  $cached_query = db_result(db_query('SELECT response FROM {votesmart_webform_cached_queries} WHERE query = \'%s\'',$query_key));
+  $cached_query = cache_get($query_key);
   if( $cached_query )
-    return unserialize($cached_query);
+  {
+    return $cached_query->data;
+  }
 
   $args = array();//set this to empty array as it is used later
 
@@ -289,7 +280,7 @@ function votesmart_webform_get_candidates($args)
         continue;
       $sanitized_candidates[$c->candidateId.''] = $candidate;
     }
-   db_query('INSERT INTO {votesmart_webform_cached_queries} (query,response) values (\'%s\',\'%s\')',$query_key,serialize($sanitized_candidates));
+    cache_set($query_key,$sanitized_candidates);
  }
 
   return $sanitized_candidates;
