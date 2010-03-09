@@ -304,14 +304,11 @@ function _webform_render_votesmart($component, $value = NULL)
 
   $office_types = array();
   if( !empty($component['extra']['office_types']) )
-    $office_types = $component['extra']['office_types'];
-
-  if( !empty($office_types) && is_array($office_types) )
   {
-      $candidates = votesmart_webform_candidate_form_elements(array('state' => $state,'zip'=> $zip,'officeTypes'=> $office_types),$component,$form['votesmart']['jumper']);
+    $office_types = $component['extra']['office_types'];
   }
-  else
-    $candidates = votesmart_webform_candidate_form_elements(array('state' => $state,'zip'=> $zip),$component);
+
+  $candidates = votesmart_webform_candidate_form_elements(array('state' => $state,'zip'=> $zip,'officeTypes'=> $office_types),$component,$form['votesmart']['jumper']);
 
   if( !empty($candidates) )
   {
@@ -335,7 +332,7 @@ function _webform_render_votesmart($component, $value = NULL)
   return $form;
 }
 
-function votesmart_webform_candidate_form_elements($args,$component, &$jumper_element)
+function votesmart_webform_candidate_form_elements($args,$component, &$jumper_element = NULL)
 {
   include('votesmart_webform.defines.php');
 
