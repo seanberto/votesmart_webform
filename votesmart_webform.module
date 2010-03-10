@@ -67,17 +67,17 @@ function votesmart_webform_admin_settings() {
     '#type' => 'fieldset',
     '#title' => ('API Settings')
   );
-  $form['api']['votesmart_host'] = array(
+  $form['api']['votesmart_webform_host'] = array(
     '#type' => 'textfield',
     '#title' => t('Votesmart API server'),
     '#description' => t(''),
-    '#default_value' => variable_get('votesmart_host', 'http://api.votesmart.org/'),
+    '#default_value' => variable_get('votesmart_webform_host', variable_get('votesmart_host', 'http://api.votesmart.org/')),
   );
-  $form['api']['votesmart_key'] = array(
+  $form['api']['votesmart__webform_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Votesmart API key'),
     '#description' => '<a href="http://www.votesmart.org/user_register.php">' . t('Register for Key') . '</a>',
-    '#default_value' => variable_get('votesmart_key', ''),
+    '#default_value' => variable_get('votesmart_webform_key', variable_get('votesmart_key', '')),
   );
 
   return system_settings_form($form);
@@ -87,8 +87,8 @@ function votesmart_webform_admin_settings() {
  * Same Request function used by votesmart module
  */
 function _votesmart_webform_api($request, $args = array(), $item = NULL) {
-  $key = variable_get('votesmart_key', '');
-  $url = variable_get('votesmart_host', 'http://api.votesmart.org/');
+  $key = variable_get('votesmart_webform_key', '');
+  $url = variable_get('votesmart_webform_host', 'http://api.votesmart.org/');
 
   // Convert arguments into a request string.
   $args = array_merge($args, array('key' => $key));
@@ -103,7 +103,7 @@ function _votesmart_webform_api($request, $args = array(), $item = NULL) {
     $ret = (array) new SimpleXMLElement($res->data, LIBXML_NOCDATA);
   }
   catch (Exception $e) {
-    drupal_set_message(t('Vote Smart Webform: Attempted to fetch %url -- SimpleXML error parsing %data',array('%url' => $url, '%data' => $res->data)),'error');
+    drupal_set_message(t('Vote Smart Webform: Attempted to fetch %url -- SimpleXML error parsing %data', array('%url' => $url, '%data' => $res->data)), 'error');
     return FALSE;
   }
   /*
@@ -253,11 +253,11 @@ function votesmart_webform_get_candidates($args) {
     if ( strlen($zip) == 9 )
       $args['zip4'] = substr($zip,5,9);
   
-    $candidates = _votesmart_webform_api('Officials.getByZip',$args,'candidate');
+    $candidates = _votesmart_webform_api('Officials.getByZip', $args, 'candidate');
   }
   elseif ( votesmart_webform_is_us_state($state) ) {
     $args = array('stateId' => $state );
-    $candidates = _votesmart_webform_api('Officials.getStatewide',$args,'candidate');
+    $candidates = _votesmart_webform_api('Officials.getStatewide', $args, 'candidate');
   }
   else return array();
 
