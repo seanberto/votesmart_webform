@@ -458,7 +458,8 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   if ( is_array($candidates) ) {
     foreach ($candidates as $cand_id => $checked ) {
       $c = votesmart_webform_get_candidate($cand_id);
-      if ( $checked ) //sanity check{
+      //sanity check
+      if ( $checked ) {
         $name = _votesmart_webform_format_name($c, $component['extra']['name_format']);
         if ( !empty($c['Email']) ) {
           $e = $c['Email'];
