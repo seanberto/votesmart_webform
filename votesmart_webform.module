@@ -239,7 +239,7 @@ function votesmart_webform_get_candidates($args) {
 
   unset($args['full']);
 
-  $query_key = 'votesmart_webform-'.serialize($args);
+  $query_key = 'votesmart_webform-' . serialize($args);
 
   $cached_query = cache_get($query_key);
   if ( $cached_query ) {
@@ -251,7 +251,7 @@ function votesmart_webform_get_candidates($args) {
   if ( votesmart_webform_is_zip($zip) ) {
     $args = array('zip5' => substr($zip, 0, 5) );
     if ( strlen($zip) == 9 )
-      $args['zip4'] = substr($zip,5,9);
+      $args['zip4'] = substr($zip, 5, 9);
   
     $candidates = _votesmart_webform_api('Officials.getByZip', $args, 'candidate');
   }
