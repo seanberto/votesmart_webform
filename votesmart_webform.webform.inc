@@ -64,7 +64,7 @@ function _webform_edit_votesmart($component) {
     '#weight' => -1.2,
     '#default_value' => $component['extra']['state'],
     '#element_validate' => array('_webform_edit_votesmart_default_state_validate'),
-    '#options' => array_merge(array('' =>''),$VOTESMART_WEBFORM_US_STATES)
+    '#options' => array_merge(array('' => ''),$VOTESMART_WEBFORM_US_STATES)
   );
 
   $form['extra']['hide_state'] = array(
@@ -81,7 +81,7 @@ function _webform_edit_votesmart($component) {
     '#description' => t('Show only officials in these offices. If you all offices leave this blank.'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['office_types'],
-    '#options' => array_merge(array('' =>''),$VOTESMART_WEBFORM_OFFICE_TYPES)
+    '#options' => array_merge(array('' => ''),$VOTESMART_WEBFORM_OFFICE_TYPES)
   );
 
   $form['extra']['hide_state'] = array(
@@ -258,7 +258,7 @@ function _webform_render_votesmart($component, $value = NULL) {
         'event' => 'change',
         'wrapper' => $dom_id,
         'path' => 'votesmart_webform/ahah/get_candidates',
-        'progress' =>array('type' => 'throbber')
+        'progress' => array('type' => 'throbber')
       )
     );
   }
@@ -267,7 +267,7 @@ function _webform_render_votesmart($component, $value = NULL) {
     $form['votesmart']['state'] = array(
       '#type' => 'select',
       '#title' => t('State'),
-      '#options' => array_merge(array('' =>''),$VOTESMART_WEBFORM_US_STATES),
+      '#options' => array_merge(array('' => ''),$VOTESMART_WEBFORM_US_STATES),
       '#multiple' => FALSE,
       '#required' => TRUE,
       '#default_value' => $component['extra']['state'],
@@ -276,7 +276,7 @@ function _webform_render_votesmart($component, $value = NULL) {
         'event' => 'change',
         'wrapper' => $dom_id,
         'path' => 'votesmart_webform/ahah/get_candidates',
-        'progress' =>array('type' => 'throbber')
+        'progress' => array('type' => 'throbber')
       )
     );
   }
@@ -302,7 +302,7 @@ function _webform_render_votesmart($component, $value = NULL) {
     $candidate_count = count($candidates);
     $form['votesmart']['candidates_prefix'] = array(
       '#type' => 'markup',
-      '#value' => '<div class="votesmart-webform-candidate-wrapper"><span class="votesmart-webform-count">'.t('Showing %candidate_count Officials',array('%candidate_count' =>$candidate_count)).'</span>'
+      '#value' => '<div class="votesmart-webform-candidate-wrapper"><span class="votesmart-webform-count">'.t('Showing %candidate_count Officials',array('%candidate_count' => $candidate_count)).'</span>'
     );
 
     $form['votesmart']['candidates'] = $candidates;
@@ -338,7 +338,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
 
   if ( $needs_jumper ) {
     $jumper_element = array(
-      '#type' =>'markup',
+      '#type' => 'markup',
       '#value' => '<ul class="votesmart-webform-jumper">'
     );
   }
@@ -350,7 +350,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
     if ( $needs_jumper )
       $jumper_element['#value'] .= '<li><a title="jump to '.$office_label.'" href="#'.$anchor_name.'">'.$office_label.'</a></li>';
     $candidate_elements[] = array(
-      '#type' =>'markup',
+      '#type' => 'markup',
       '#value' => '<h4><a name="'.$anchor_name.'">'.$office_label.'</a></h4>'
     );
     asort($cands);
@@ -363,7 +363,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
       if ( !$component['extra']['hide_no_email_warnings'] && !isset($candidates[$cand_id]['Email']) ) {     
         if ( !$component['extra']['allow_candidates_without_email'] )
           $element['#disabled'] = TRUE;
-        $element['#description'] = t('No email found for !candidate.',array('!candidate' =>$cand_name));
+        $element['#description'] = t('No email found for !candidate.',array('!candidate' => $cand_name));
 
         if ( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) ) {
           if ( isset($candidates[$cand_id]['Webmail']) ) {       
@@ -373,7 +373,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
             $website = $candidates[$cand_id]['Website'];
 
           $element['#description'] = t('No email found for !candidate. Try contacting them at <a target="_blank" rel="nofollow" href="!website">their&nbsp;website</a>.',array(
-            '!candidate' =>$cand_name,
+            '!candidate' => $cand_name,
             '!website' => $website
           ));
 
@@ -428,7 +428,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   );
 
   if ( $format == 'html' ) {
-    $ret['#prefix'] = '<fieldset><legend>'.t($component['name']).'</legend>';
+    $ret['#prefix'] = '<fieldset><legend>' . t($component['name']) . '</legend>';
     $ret['#suffix'] = '</fieldset>';
   }
 
@@ -445,7 +445,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
         $name = _votesmart_webform_format_name($c,$component['extra']['name_format']);
         if ( !empty($c['Email']) ) {
           $e = $c['Email'];
-          $name .= $format == 'text' ? ' '.$e : ' '.l($e, 'mailto:'.$e);
+          $name .= $format == 'text' ? ' ' . $e : ' ' . l($e, 'mailto:'.$e);
         }
         $cand_names[] = $name;
       }
@@ -455,11 +455,11 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
 
 
   if ( !empty($value[0]['votesmart']['state']) ) {
-    $o = t('State').': '.$value[0]['votesmart']['state'].'<br />'."\r\n";
+    $o = t('State') . ': '.$value[0]['votesmart']['state'] . "<br />\r\n";
   }
 
   if ( !empty($value[0]['votesmart']['zip']) ) {
-    $o = t('Zip').': '.$value[0]['votesmart']['zip'].'<br />'."\r\n";
+    $o = t('Zip') . ': ' . $value[0]['votesmart']['zip'] . "<br />\r\n";
   }
 
   unset($value[0]);
@@ -467,7 +467,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   $o .= t('Officials Selected') . ': ';
 
   if ( $format == 'text' ) {
-    $o .= "\r\n".implode("\r\n",$cand_names)."\r\n";
+    $o .= "\r\n" . implode("\r\n",$cand_names) . "\r\n";
     $ret['#value'] = strip_tags($o);
     return array();//hack to keep this out of emails
     return $ret;//must return an array
