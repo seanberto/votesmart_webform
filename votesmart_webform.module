@@ -32,7 +32,7 @@ function votesmart_webform_menu() {
  * Implementation of hook_init().
  */
 function votesmart_webform_init() {
-  $path = drupal_get_path('module','votesmart_webform');
+  $path = drupal_get_path('module', 'votesmart_webform');
   drupal_add_css($path . '/votesmart_webform.css', 'module');
   drupal_add_js($path . '/votesmart_webform.js', 'module');
 }
@@ -99,10 +99,10 @@ function _votesmart_webform_api($request, $args = array(), $item = NULL) {
 
   // Contact the REST API.
   $res = drupal_http_request($url);
-  try{
+  try {
     $ret = (array) new SimpleXMLElement($res->data, LIBXML_NOCDATA);
   }
-  catch(Exception $e) {
+  catch (Exception $e) {
     drupal_set_message(t('Vote Smart Webform: Attempted to fetch %url -- SimpleXML error parsing %data',array('%url' => $url, '%data' => $res->data)),'error');
     return FALSE;
   }
@@ -142,7 +142,7 @@ function votesmart_webform_is_zip($zip) {
 
 
 function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $full = TRUE) {
-  $candidateId.='';//convert to string
+  $candidateId .= '';//convert to string
 
   static $candidates;//cache candidates
   
@@ -166,13 +166,13 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
 
       if ( $full ) {
         $c_xml_web = _votesmart_webform_api('Address.getOfficeWebAddress', array('candidateId' => $candidateId));
-        $c_xml_addr = _votesmart_webform_api('Address.getOffice', array('candidateId' => $candidateId),'office');
+        $c_xml_addr = _votesmart_webform_api('Address.getOffice', array('candidateId' => $candidateId), 'office');
       }
 
       //officials can have multiple offices listed,
       //we are only saving the first one
       if ( isset($c_xml_addr[0]->address) ) {
-        foreach($c_xml_addr[0]->address as $k => $v) {
+        foreach ($c_xml_addr[0]->address as $k => $v) {
           $v = trim($v);
           if ( !empty($v) ) {
             $c['address'][$k] = $v;
@@ -191,7 +191,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
         'officeName'
       );
 
-      foreach($vars_to_save as $var) {
+      foreach ($vars_to_save as $var) {
         if ( !empty($c_xml_web['candidate']->$var) ) {
           $c[$var] = $c_xml_web['candidate']->$var . '';
         }
@@ -201,7 +201,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
       }
 
       if ( is_array($c_xml_web['address']) ) {
-        foreach($c_xml_web['address'] as $addr) {
+        foreach ($c_xml_web['address'] as $addr) {
           $c[$addr->webAddressType . ''] = $addr->webAddress . '';
         }
       }
@@ -228,7 +228,7 @@ function votesmart_webform_get_candidates($args) {
   $state = $args['state'];
   $officeTypes = $args['officeTypes'];
   if ( is_array($officeTypes) ) {
-    foreach($officeTypes as $k => $office_type ) {
+    foreach ($officeTypes as $k => $office_type ) {
       if ( !votesmart_webform_is_office_type($office_type) ) {
         unset($officeTypes[$k]);
       }
@@ -249,7 +249,7 @@ function votesmart_webform_get_candidates($args) {
   $args = array();//set this to empty array as it is used later
 
   if ( votesmart_webform_is_zip($zip) ) {
-    $args = array('zip5' => substr($zip,0,5) );
+    $args = array('zip5' => substr($zip, 0, 5) );
     if ( strlen($zip) == 9 )
       $args['zip4'] = substr($zip,5,9);
   
@@ -262,17 +262,17 @@ function votesmart_webform_get_candidates($args) {
   else return array();
 
   $sanitized_candidates = array();
-	
+  
   if ( is_array($candidates) ) {
     $do_office_check = !empty($officeTypes) && is_array($officeTypes);
-    foreach($candidates as $c) {
+    foreach ($candidates as $c) {
       $candidate = votesmart_webform_get_candidate($c->candidateId, $c, $full);
       if ( empty($candidate) || ( $do_office_check && !in_array($candidate['officeTypeId'], $officeTypes) ) ) {
         continue;
       }
       $sanitized_candidates[$c->candidateId . ''] = $candidate;
     }
-    cache_set($query_key,$sanitized_candidates, 'cache', CACHE_TEMPORARY);
+    cache_set($query_key, $sanitized_candidates, 'cache', CACHE_TEMPORARY);
  }
 
   return $sanitized_candidates;

@@ -319,7 +319,7 @@ function _webform_render_votesmart($component, $value = NULL)
   }
 
   if ( is_array($value['votesmart']['candidates']) )
-    foreach($value['votesmart']['candidates'] as $k => $v )
+    foreach ($value['votesmart']['candidates'] as $k => $v )
       $form['votesmart']['candidates'][$k]['#default_value'] = $v;
 
   return $form;
@@ -335,7 +335,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
   if ( empty($candidates) ) return array();
 
   $cand_names = array();
-  foreach($candidates as $id => $c) {
+  foreach ($candidates as $id => $c) {
     if ( !isset($cand_names[$c['officeTypeId']]) )
       $cand_names[$c['officeTypeId']] = array();
     $cand_names[$c['officeTypeId']][$id] = _votesmart_webform_format_name($c,$component['extra']['name_format']);
@@ -351,7 +351,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
   }
 
   asort($cand_names);
-  foreach($cand_names as $office => $cands ) {
+  foreach ($cand_names as $office => $cands ) {
     $anchor_name = 'votesmart-webform-office-type-'.strtolower($office);
     $office_label = t($VOTESMART_WEBFORM_OFFICE_TYPES[$office]);
     if ( $needs_jumper )
@@ -361,7 +361,7 @@ function votesmart_webform_candidate_form_elements($args,$component, &$jumper_el
       '#value' => '<h4><a name="'.$anchor_name.'">'.$office_label.'</a></h4>'
     );
     asort($cands);
-    foreach($cands as $cand_id => $cand_name ) {
+    foreach ($cands as $cand_id => $cand_name ) {
       $element = array(
         '#type' => 'checkbox',
         '#title' => $cand_name,
@@ -446,7 +446,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   $cand_names = array();
 
   if ( is_array($candidates) ) {
-    foreach($candidates as $cand_id => $checked ) {
+    foreach ($candidates as $cand_id => $checked ) {
       $c = votesmart_webform_get_candidate($cand_id);
       if ( $checked ) //sanity check{
         $name = _votesmart_webform_format_name($c,$component['extra']['name_format']);
@@ -504,7 +504,7 @@ function _webform_submit_votesmart($component, &$value)
   if ( empty($value) || !is_array($value['votesmart']['candidates']) ) return NULL;
 
   $ret = array(0 => ''); //placeholder for serialized value
-  foreach($value['votesmart']['candidates'] as $cand_id => $checked) {
+  foreach ($value['votesmart']['candidates'] as $cand_id => $checked) {
     if ( !$checked ) {
       unset($value['votesmart']['candidates'][$cand_id]);
     }
@@ -561,7 +561,7 @@ function _votesmart_webform_element_children_search($form,$key)
 
   if ( !is_array($element_children) ) return FALSE;
 
-  foreach($element_children as $e) {
+  foreach ($element_children as $e) {
     $result = _votesmart_webform_element_children_search($form[$e],$key);
     if ( $result != FALSE ) return $result;
   }
@@ -577,7 +577,7 @@ function _votesmart_webform_array_key_search($arr,$key)
 
   if ( !is_array($arr) ) return FALSE;
 
-  foreach($arr as $e) {
+  foreach ($arr as $e) {
     $result = _votesmart_webform_array_key_search($e,$key);
     if ( $result != FALSE ) return $result;
   }
@@ -603,7 +603,7 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
 
   $error = TRUE;
   if ( is_array($candidates) ) {
-    foreach( $candidates as $cand_id ) {
+    foreach ( $candidates as $cand_id ) {
       if ( $votesmart['candidates'][$cand_id]['#value'] == 1 ) {
         $error = FALSE;
         break;
