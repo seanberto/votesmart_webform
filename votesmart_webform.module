@@ -1,7 +1,7 @@
 <?php
 // $Id$
 
-function votesmart_webform_menu(){
+function votesmart_webform_menu() {
   $items = array();
 
   // Admin Settings.
@@ -25,7 +25,7 @@ function votesmart_webform_menu(){
   return $items;
 }
 
-function votesmart_webform_init(){
+function votesmart_webform_init() {
   $path = drupal_get_path('module','votesmart_webform');
   drupal_add_css($path.'/votesmart_webform.css', 'module');
   drupal_add_js($path.'/votesmart_webform.js', 'module');
@@ -90,12 +90,10 @@ function _votesmart_webform_api($request, $args = array(), $item = NULL) {
 
   // Contact the REST API.
   $res = drupal_http_request($url);
-  try
-  {
+  try{
     $ret = (array) new SimpleXMLElement($res->data, LIBXML_NOCDATA);
   }
-  catch(Exception $e)
-  {
+  catch(Exception $e) {
     drupal_set_message(t('Vote Smart Webform: Attempted to fetch %url -- SimpleXML error parsing %data',array('%url' => $url, '%data' => $res->data)),'error');
     return FALSE;
   }
@@ -115,67 +113,59 @@ function _votesmart_webform_api($request, $args = array(), $item = NULL) {
   return $ret;
 }
 
-function votesmart_webform_is_us_state($state_abbr){
+function votesmart_webform_is_us_state($state_abbr) {
   include('votesmart_webform.defines.php');
   return isset($VOTESMART_WEBFORM_US_STATES[$state_abbr]);
 }
 
 //office types and ids are the same,
 //keeping language the same as votesmart api
-function votesmart_webform_is_office_type($officeType){
+function votesmart_webform_is_office_type($officeType) {
   include('votesmart_webform.defines.php');
   return isset($VOTESMART_WEBFORM_OFFICE_TYPES[$officeType]);
 }
 
 
-function votesmart_webform_is_zip($zip){
+function votesmart_webform_is_zip($zip) {
   return preg_match('/^[0-9]{5}([- ]?[0-9]{4})?$/', $zip);
 }
 
 
 
-function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $full = TRUE){
+function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $full = TRUE) {
   $candidateId.='';//convert to string
 
   static $candidates;//cache candidates
   
-  if( !isset($candidates) )
-  {
+  if( !isset($candidates) ) {
     $candidates = array();
   }
 
-  if( !isset($candidates[$candidateId]) )
-  {
+  if( !isset($candidates[$candidateId]) ) {
     $c = array();//candidate array
 
     //only hit the database if we need more than the name
     //or haven't been provided any info
-    if( $full || empty($partial_candidate_xml))
-    {
+    if( $full || empty($partial_candidate_xml)) {
       $candidate_data = cache_get('votesmart_webform-candidate-' . $candidateId);
       $c = $candidate_data->data;
     }
 
-    if( !$candidate_data )
-    {
+    if( !$candidate_data ) {
       //not scoped so we have opportunity to fix candidate name
       //if it is missing from partial $partial_candidate_xml
 
-      if( $full )
-      {
+      if( $full ) {
         $c_xml_web = _votesmart_webform_api('Address.getOfficeWebAddress', array('candidateId' => $candidateId));
         $c_xml_addr = _votesmart_webform_api('Address.getOffice', array('candidateId' => $candidateId),'office');
       }
 
       //officials can have multiple offices listed,
       //we are only saving the first one
-      if( isset($c_xml_addr[0]->address) )
-      {
-        foreach($c_xml_addr[0]->address as $k => $v)
-        {
+      if( isset($c_xml_addr[0]->address) ) {
+        foreach($c_xml_addr[0]->address as $k => $v) {
           $v = trim($v);
-          if( !empty($v) )
-          {
+          if( !empty($v) ) {
             $c['address'][$k] = $v;
           }
         }
@@ -192,33 +182,26 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
         'officeName'
       );
 
-      foreach($vars_to_save as $var)
-      {
-        if( !empty($c_xml_web['candidate']->$var) )
-        {
+      foreach($vars_to_save as $var) {
+        if( !empty($c_xml_web['candidate']->$var) ) {
           $c[$var] = $c_xml_web['candidate']->$var . '';
         }
-        else if( !empty($partial_candidate_xml->$var) )
-        {
+        else if( !empty($partial_candidate_xml->$var) ) {
           $c[$var] = $partial_candidate_xml->$var . '';
         }
       }
 
-      if( is_array($c_xml_web['address']) )
-      {
-        foreach($c_xml_web['address'] as $addr)
-        {
+      if( is_array($c_xml_web['address']) ) {
+        foreach($c_xml_web['address'] as $addr) {
           $c[$addr->webAddressType.''] = $addr->webAddress . '';
         }
       }
 
-      if( empty($c) )
-      {
+      if( empty($c) ) {
         return FALSE;
       }
 
-      if( $full )
-      {
+      if( $full ) {
         cache_set('votesmart_webform-candidate-' . $candidateId, $c, 'cache', CACHE_TEMPORARY);
       }
     }
@@ -229,18 +212,15 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
   return $candidates[$candidateId];
 }
 
-function votesmart_webform_get_candidates($args){
+function votesmart_webform_get_candidates($args) {
   $args['zip'] = preg_replace('@[^\d]@', '', $args['zip']);//strip non digits
 
   $zip = $args['zip'];
   $state = $args['state'];
   $officeTypes = $args['officeTypes'];
-  if( is_array($officeTypes) )
-  {
-    foreach($officeTypes as $k => $office_type )
-    {
-      if( !votesmart_webform_is_office_type($office_type) )
-      {
+  if( is_array($officeTypes) ) {
+    foreach($officeTypes as $k => $office_type ) {
+      if( !votesmart_webform_is_office_type($office_type) ) {
         unset($officeTypes[$k]);
       }
     }
@@ -253,23 +233,20 @@ function votesmart_webform_get_candidates($args){
   $query_key = 'votesmart_webform-'.serialize($args);
 
   $cached_query = cache_get($query_key);
-  if( $cached_query )
-  {
+  if( $cached_query ) {
     return $cached_query->data;
   }
 
   $args = array();//set this to empty array as it is used later
 
-  if( votesmart_webform_is_zip($zip) )
-  {
+  if( votesmart_webform_is_zip($zip) ) {
     $args = array('zip5' => substr($zip,0,5) );
     if( strlen($zip) == 9 )
       $args['zip4'] = substr($zip,5,9);
   
     $candidates = _votesmart_webform_api('Officials.getByZip',$args,'candidate');
   }
-  else if( votesmart_webform_is_us_state($state) )
-  {
+  else if( votesmart_webform_is_us_state($state) ) {
     $args = array('stateId' => $state );
     $candidates = _votesmart_webform_api('Officials.getStatewide',$args,'candidate');
   }
@@ -277,14 +254,11 @@ function votesmart_webform_get_candidates($args){
 
   $sanitized_candidates = array();
 	
-  if( is_array($candidates) )
-  {
+  if( is_array($candidates) ) {
     $do_office_check = !empty($officeTypes) && is_array($officeTypes);
-    foreach($candidates as $c)
-    {
+    foreach($candidates as $c) {
       $candidate = votesmart_webform_get_candidate($c->candidateId, $c, $full);
-      if( empty($candidate) || ( $do_office_check && !in_array($candidate['officeTypeId'], $officeTypes) ) )
-      {
+      if( empty($candidate) || ( $do_office_check && !in_array($candidate['officeTypeId'], $officeTypes) ) ) {
         continue;
       }
       $sanitized_candidates[$c->candidateId.''] = $candidate;
