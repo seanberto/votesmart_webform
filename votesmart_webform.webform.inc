@@ -29,6 +29,12 @@ function _webform_defaults_votesmart() {
   );
 }
 
+/**
+ * Given candidate and tokenized format string, return candidates name formatted.
+ * @param $candidate candidate array object
+ * @param $format tokenized tring used to format name
+ * @return string containing candidate's name formatted
+ */
 function _votesmart_webform_format_name($candidate, $format = '!last !suffix, !first') {
   if ( !is_array($candidate) ) return '';
 
@@ -146,7 +152,7 @@ function _webform_edit_votesmart_default_zip_validate($element, &$form_state) {
   if ( empty($zip) ) return;
 
   if ( !votesmart_webform_is_zip($zip) ) {
-    form_error($element,t('!value is not a valid zip code.', array('!value' => $zip)));
+    form_error($element, t('!value is not a valid zip code.', array('!value' => $zip)));
   }
 }
 
@@ -158,10 +164,10 @@ function _webform_edit_votesmart_default_zip_validate($element, &$form_state) {
 function _webform_edit_votesmart_zip_validate($element, &$form_state) {
   $zip = $element['#value'];//alias
   if ( empty($zip) )
-    form_error($element,t('zip can not be blank.', array('!value' => $zip)));
+    form_error($element, t('zip can not be blank.', array('!value' => $zip)));
 
   if ( !votesmart_webform_is_zip($zip) ) {
-    form_error($element,t('!value is not a valid zip code.', array('!value' => $zip)));
+    form_error($element, t('!value is not a valid zip code.', array('!value' => $zip)));
   }
 }
 
@@ -175,7 +181,7 @@ function _webform_edit_votesmart_default_state_validate($element, &$form_state) 
   if ( empty($state) ) return;
 
   if ( !votesmart_webform_is_us_state($state) ) {
-    form_error($element,t('!value is not a valid state.', array('!value' => $state)));
+    form_error($element, t('!value is not a valid state.', array('!value' => $state)));
   }
 }
 
@@ -187,10 +193,10 @@ function _webform_edit_votesmart_default_state_validate($element, &$form_state) 
 function _webform_edit_votesmart_state_validate($element, &$form_state) {
   $state = $element['#value'];//alias
   if ( empty($state) )
-    form_error($element,t('Please select a state.'));
+    form_error($element, t('Please select a state.'));
 
   if ( !votesmart_webform_is_us_state($state) ) {
-    form_error($element,t('!value is not a valid state.', array('!value' => $state)));
+    form_error($element, t('!value is not a valid state.', array('!value' => $state)));
   }
 }
 
@@ -223,11 +229,11 @@ function _webform_render_votesmart($component, $value = NULL) {
 
   }
   
-  $dom_id = 'webform-component-'.$component['form_key'];
+  $dom_id = 'webform-component-' . $component['form_key'];
   $form = array(
-    '#prefix' => '<div id="'.$dom_id.'" class="webform-component-votesmart">',
+    '#prefix' => '<div id="' . $dom_id.'" class="webform-component-votesmart">',
     'votesmart' => array(),
-    '#suffix' => '</div><!--/#'.$dom_id.' .webform-component-votesmart-->',
+    '#suffix' => '</div><!--/#' . $dom_id.' .webform-component-votesmart-->',
     '#weight' => $component['weight']
   );
 
@@ -302,7 +308,7 @@ function _webform_render_votesmart($component, $value = NULL) {
     $candidate_count = count($candidates);
     $form['votesmart']['candidates_prefix'] = array(
       '#type' => 'markup',
-      '#value' => '<div class="votesmart-webform-candidate-wrapper"><span class="votesmart-webform-count">'.t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)).'</span>'
+      '#value' => '<div class="votesmart-webform-candidate-wrapper"><span class="votesmart-webform-count">' . t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)).'</span>'
     );
 
     $form['votesmart']['candidates'] = $candidates;
@@ -319,6 +325,12 @@ function _webform_render_votesmart($component, $value = NULL) {
   return $form;
 }
 
+/**
+ * @param $args array containing conditions the officials must meet to be included
+ * @param $component array containing component options
+ * @param $jumper_element html element containing list used to jump to various branches in the list
+ * @return array of candidate form elements
+ */
 function votesmart_webform_candidate_form_elements($args, $component, &$jumper_element = NULL) {
   include('votesmart_webform.defines.php');
 
@@ -345,13 +357,13 @@ function votesmart_webform_candidate_form_elements($args, $component, &$jumper_e
 
   asort($cand_names);
   foreach ($cand_names as $office => $cands ) {
-    $anchor_name = 'votesmart-webform-office-type-'.strtolower($office);
+    $anchor_name = 'votesmart-webform-office-type-' . strtolower($office);
     $office_label = t($VOTESMART_WEBFORM_OFFICE_TYPES[$office]);
     if ( $needs_jumper )
-      $jumper_element['#value'] .= '<li><a title="jump to '.$office_label.'" href="#'.$anchor_name.'">'.$office_label.'</a></li>';
+      $jumper_element['#value'] .= '<li><a title="jump to ' . $office_label.'" href="#' . $anchor_name . '">' . $office_label . '</a></li>';
     $candidate_elements[] = array(
       '#type' => 'markup',
-      '#value' => '<h4><a name="'.$anchor_name.'">'.$office_label.'</a></h4>'
+      '#value' => '<h4><a name="' . $anchor_name.'">' . $office_label.'</a></h4>'
     );
     asort($cands);
     foreach ($cands as $cand_id => $cand_name ) {
@@ -403,7 +415,7 @@ function votesmart_webform_candidate_form_elements($args, $component, &$jumper_e
  *   An array of information containing the submission result, directly
  *   correlating to the webform_submitted_data database table schema.
  * @param $format
- *   Either 'html' or 'text'. Defines the format that the content should be
+ *   Either 'html' or 'text' . Defines the format that the content should be
  *   returned as. Make sure that returned content is run through check_plain()
  *   or other filtering functions when returning HTML.
  * @return
@@ -445,7 +457,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
         $name = _votesmart_webform_format_name($c, $component['extra']['name_format']);
         if ( !empty($c['Email']) ) {
           $e = $c['Email'];
-          $name .= $format == 'text' ? ' ' . $e : ' ' . l($e, 'mailto:'.$e);
+          $name .= $format == 'text' ? ' ' . $e : ' ' . l($e, 'mailto:' . $e);
         }
         $cand_names[] = $name;
       }
@@ -455,7 +467,7 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
 
 
   if ( !empty($value[0]['votesmart']['state']) ) {
-    $o = t('State') . ': '.$value[0]['votesmart']['state'] . "<br />\r\n";
+    $o = t('State') . ': ' . $value[0]['votesmart']['state'] . "<br />\r\n";
   }
 
   if ( !empty($value[0]['votesmart']['zip']) ) {
@@ -573,8 +585,7 @@ function _votesmart_webform_array_key_search($arr, $key) {
 
 function _votesmart_webform_validate_candidates($form, &$form_state, $first_run = TRUE) {
   $votesmart = _votesmart_webform_element_children_search($form, 'votesmart');
-  if ( isset($votesmart['votesmart'] ) )
-  {
+  if ( isset($votesmart['votesmart'] ) ) {
     $votesmart = $votesmart['votesmart'];
   }
 
@@ -585,7 +596,7 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
   }
   
   if ( empty($votesmart['candidates']) ) {
-    form_set_error('votesmart',t('Please select one or more officials.'));
+    form_set_error('votesmart', t('Please select one or more officials.'));
   }
 
   $candidates = element_children($votesmart['candidates']);//alias
@@ -601,7 +612,7 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
   }//if is_array
   
   if ( $error )
-    form_set_error('votesmart',t('Please select one or more officials.'));
+    form_set_error('votesmart', t('Please select one or more officials.'));
 }
 
 /**
