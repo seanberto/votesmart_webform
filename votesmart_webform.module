@@ -1,6 +1,9 @@
 <?php
 // $Id$
 
+/**
+ * Implementation of hook_menu().
+ */
 function votesmart_webform_menu() {
   $items = array();
 
@@ -25,12 +28,18 @@ function votesmart_webform_menu() {
   return $items;
 }
 
+/**
+ * Implementation of hook_init().
+ */
 function votesmart_webform_init() {
   $path = drupal_get_path('module','votesmart_webform');
-  drupal_add_css($path.'/votesmart_webform.css', 'module');
-  drupal_add_js($path.'/votesmart_webform.js', 'module');
+  drupal_add_css($path . '/votesmart_webform.css', 'module');
+  drupal_add_js($path . '/votesmart_webform.js', 'module');
 }
 
+/**
+ * Implementation of hook_webform_component_info().
+ */
 function votesmart_webform_webform_component_info() {
   //component was originally called votesmart_webform,
   //but it was too long? m got chopped off.
@@ -42,7 +51,7 @@ function votesmart_webform_webform_component_info() {
       'csv' => TRUE, // Add content to CSV downloads.
       'email' => FALSE,// Show this field in e-mailed submissions.
       'email_address' => TRUE, // Allow this field to be used as an e-mail FROM or TO address.
-      'email_name' =>FALSE,// Allow this field to be used as an e-mail SUBJECT or FROM name.
+      'email_name' => FALSE,// Allow this field to be used as an e-mail SUBJECT or FROM name.
       'required' => TRUE,// This field may be toggled as required or not.
     ),
     'file' => 'votesmart_webform.webform.inc'
@@ -50,7 +59,7 @@ function votesmart_webform_webform_component_info() {
 }
 
 /**
- * Uses same settings and keys as votesmart module
+ * Implementation of hook_admin_settings().
  */
 function votesmart_webform_admin_settings() {
   $form = array();
@@ -67,7 +76,7 @@ function votesmart_webform_admin_settings() {
   $form['api']['votesmart_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Votesmart API key'),
-    '#description' => '<a href="http://www.votesmart.org/user_register.php">'.t('Register for Key').'</a>',
+    '#description' => '<a href="http://www.votesmart.org/user_register.php">' . t('Register for Key') . '</a>',
     '#default_value' => variable_get('votesmart_key', ''),
   );
 
@@ -193,7 +202,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
 
       if( is_array($c_xml_web['address']) ) {
         foreach($c_xml_web['address'] as $addr) {
-          $c[$addr->webAddressType.''] = $addr->webAddress . '';
+          $c[$addr->webAddressType . ''] = $addr->webAddress . '';
         }
       }
 
@@ -261,7 +270,7 @@ function votesmart_webform_get_candidates($args) {
       if( empty($candidate) || ( $do_office_check && !in_array($candidate['officeTypeId'], $officeTypes) ) ) {
         continue;
       }
-      $sanitized_candidates[$c->candidateId.''] = $candidate;
+      $sanitized_candidates[$c->candidateId . ''] = $candidate;
     }
     cache_set($query_key,$sanitized_candidates, 'cache', CACHE_TEMPORARY);
  }

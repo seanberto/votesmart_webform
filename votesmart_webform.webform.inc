@@ -1,5 +1,5 @@
 <?php
-// $Id
+// $Id$
 
 /**
  * Specify the default properties of votesmart_webform component
@@ -519,19 +519,6 @@ function _webform_submit_votesmart($component, &$value)
   return $ret;
 }
 
-
-/**
- * Module specific instance of hook_help().
- *
- * This allows each Webform component to add information into hook_help().
- */
-function _webform_help_votesmart($section) {
-  switch ($section) {
-    case 'admin/settings/webform#votesmart_webform_description':
-      return t('Allows for representative lookup by zip code.');
-  }
-}
-
 function votesmart_webform_ahah_get_candidates()
 {
   $form_state = array('storage' =>  NULL, 'submitted' => FALSE);
@@ -555,8 +542,6 @@ function votesmart_webform_ahah_get_candidates()
   
   drupal_json(array('status' => TRUE, 'data' => $output));
 }
-
-
 
 function votesmart_webform_form_alter(&$form, $form_state, $form_id)
 {
