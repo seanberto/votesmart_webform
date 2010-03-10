@@ -9,7 +9,7 @@ function votesmart_webform_menu() {
 
   // Admin Settings.
   $items['admin/settings/votesmart_webform'] = array(
-    'title' => 'Vote Smart Webform',
+    'title' => 'Vote smart webform',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('votesmart_webform_admin_settings'),
     'access arguments' => array('administer site configuration'),
@@ -18,7 +18,7 @@ function votesmart_webform_menu() {
   );
 
   $items['votesmart_webform/ahah/get_candidates'] = array(
-    'title' => 'AHAH Callback for Vote Smart Webform',
+    'title' => 'AHAH callback for vote smart webform',
     'page callback' => 'votesmart_webform_ahah_get_candidates',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,

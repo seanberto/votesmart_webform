@@ -2,6 +2,11 @@
 // $Id$
 
 /**
+ * @file
+ * Vote Smart Webform component.
+ */
+
+/**
  * Specify the default properties of votesmart_webform component
  *
  * @return An array defining the default structure of a component.
@@ -231,9 +236,9 @@ function _webform_render_votesmart($component, $value = NULL) {
   
   $dom_id = 'webform-component-' . $component['form_key'];
   $form = array(
-    '#prefix' => '<div id="' . $dom_id.'" class="webform-component-votesmart">',
+    '#prefix' => '<div id="' . $dom_id . '" class="webform-component-votesmart">',
     'votesmart' => array(),
-    '#suffix' => '</div><!--/#' . $dom_id.' .webform-component-votesmart-->',
+    '#suffix' => '</div><!--/#' . $dom_id . ' .webform-component-votesmart-->',
     '#weight' => $component['weight']
   );
 
@@ -308,7 +313,7 @@ function _webform_render_votesmart($component, $value = NULL) {
     $candidate_count = count($candidates);
     $form['votesmart']['candidates_prefix'] = array(
       '#type' => 'markup',
-      '#value' => '<div class="votesmart-webform-candidate-wrapper"><span class="votesmart-webform-count">' . t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)).'</span>'
+      '#value' => '<div class="votesmart-webform-candidate-wrapper"><span class="votesmart-webform-count">' . t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)) . '</span>'
     );
 
     $form['votesmart']['candidates'] = $candidates;
@@ -360,10 +365,10 @@ function votesmart_webform_candidate_form_elements($args, $component, &$jumper_e
     $anchor_name = 'votesmart-webform-office-type-' . strtolower($office);
     $office_label = t($VOTESMART_WEBFORM_OFFICE_TYPES[$office]);
     if ( $needs_jumper )
-      $jumper_element['#value'] .= '<li><a title="jump to ' . $office_label.'" href="#' . $anchor_name . '">' . $office_label . '</a></li>';
+      $jumper_element['#value'] .= '<li><a title="jump to ' . $office_label . '" href="#' . $anchor_name . '">' . $office_label . '</a></li>';
     $candidate_elements[] = array(
       '#type' => 'markup',
-      '#value' => '<h4><a name="' . $anchor_name.'">' . $office_label.'</a></h4>'
+      '#value' => '<h4><a name="' . $anchor_name . '">' . $office_label . '</a></h4>'
     );
     asort($cands);
     foreach ($cands as $cand_id => $cand_name ) {
@@ -513,7 +518,7 @@ function _webform_submit_votesmart($component, &$value) {
       unset($value['votesmart']['candidates'][$cand_id]);
     }
     else{
-      $candidate = votesmart_webform_get_candidate($cand_id,NULL,TRUE);
+      $candidate = votesmart_webform_get_candidate($cand_id, NULL, TRUE);
       if ( !empty($candidate['Email']) ) {
         $ret[] = $candidate['Email'];
       }
