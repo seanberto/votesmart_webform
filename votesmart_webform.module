@@ -69,12 +69,12 @@ function votesmart_webform_admin_settings() {
   );
   $form['api']['votesmart_webform_host'] = array(
     '#type' => 'textfield',
-    '#title' => t('Votesmart API server'),
+    '#title' => t('Vote Smart API server'),
     '#default_value' => variable_get('votesmart_webform_host', 'http://api.votesmart.org/'),
   );
   $form['api']['votesmart_webform_key'] = array(
     '#type' => 'textfield',
-    '#title' => t('Votesmart API key'),
+    '#title' => t('Vote Smart API key'),
     '#description' => l(t('Register for key.'), 'http://www.votesmart.org/user_register.php', array('attributes' => array('target' => '_blank'))),
     '#default_value' => variable_get('votesmart_webform_key',''),
   );
