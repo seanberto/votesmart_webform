@@ -82,18 +82,39 @@ function votesmart_webform_webform_exporters() {
   );
 }
 
-
+module_load_include('inc', 'webform', 'includes/webform.export');
 class votesmart_webform_exporter_delimited extends webform_exporter_delimited {
+  var $votesmart_idx = NULL;
   function add_row(&$file_handle, $data) {
+    dsm($data);
+    
     parent::add_row($file_handle, $data);
   }
 }
 
 class votesmart_webform_exporter_excel extends webform_exporter_excel {
+  var $votesmart_idx = NULL;
   function add_row(&$file_handle, $data) {
-    parent::add_row($file_handle, $data);
+    if ( $this->votesmart_idx  == NULL ) {
+      $tmp_data = array_map('trim',$data);
+      $tmp = array_search('Votesmart',$tmp_data);
+      if( $tmp != FALSE ) {
+        $this->votesmart_idx = $tmp + 2;//State Zip Selected Candidates
+      }
+    }
+    if( $this->votesmart_idx != NULL && !empty($data[$this->votesmart_idx]) ) {
+      $cand_ids = explode(';',$data[$this->votesmart_idx]);
+      foreach($cand_ids as $cand_id){
+        $data[$this->votesmart_idx] = print_r(votesmart_webform_get_candidate($cand_id),1);
+        parent::add_row($file_handle, $data);  
+      }
+    }
+    else {
+      parent::add_row($file_handle, $data);
+    }
   }
 }
+
 
 /**
  * Implementation of hook_admin_settings().
@@ -196,10 +217,9 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
       $c = $candidate_data->data;
     }
 
-    if ( !$candidate_data ) {
+    if ( !$candidate_data || $full ) {
       //not scoped so we have opportunity to fix candidate name
       //if it is missing from partial $partial_candidate_xml
-
       if ( $full ) {
         $c_xml_web = _votesmart_webform_api('Address.getOfficeWebAddress', array('candidateId' => $candidateId));
         $c_xml_addr = _votesmart_webform_api('Address.getOffice', array('candidateId' => $candidateId), 'office');
@@ -207,8 +227,19 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
 
       //officials can have multiple offices listed,
       //we are only saving the first one
-      if ( isset($c_xml_addr[0]->address) ) {
-        foreach ($c_xml_addr[0]->address as $k => $v) {
+      if ( isset($c_xml_addr[0]->address) )
+      {
+        $c_xml_addr = $c_xml_addr[0]->address;
+      }
+
+      if ( isset($c_xml_addr['address']) )
+      {
+        $c_xml_addr = $c_xml_addr['address'];
+      }
+
+      if ( isset($c_xml_addr) ) {
+        foreach (array('type', 'street', 'city', 'state', 'zip') as $k) {
+          $v = $c_xml_addr->$k;
           $v = trim($v);
           if ( !empty($v) ) {
             $c['address'][$k] = $v;
