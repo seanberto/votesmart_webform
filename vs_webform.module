@@ -41,10 +41,7 @@ function vs_webform_init() {
  * Implementation of hook_webform_component_info().
  */
 function vs_webform_webform_component_info() {
-  //component was originally called vs_webform,
-  //but it was too long? m got chopped off.
   return array('vs_webform' => array(
-    'type' => 'email',
     'label' => t('Vote Smart Lookup'),
     'description' => t('Looks up Representative for Given Zip Code'),
     'features' => array(
@@ -240,14 +237,14 @@ function _vs_webform_api($request, $args = array(), $item = NULL) {
 
 function vs_webform_is_us_state($state_abbr) {
   module_load_include('inc', 'vs_webform', 'vs_webform.defines');
-  return isset($vs_webform_US_STATES[$state_abbr]);
+  return isset($VS_WEBFORM_US_STATES[$state_abbr]);
 }
 
 //office types and ids are the same,
 //keeping language the same as votesmart api
 function vs_webform_is_office_type($officeType) {
   module_load_include('inc', 'vs_webform', 'vs_webform.defines');
-  return isset($vs_webform_OFFICE_TYPES[$officeType]);
+  return isset($VS_WEBFORM_OFFICE_TYPES[$officeType]);
 }
 
 
