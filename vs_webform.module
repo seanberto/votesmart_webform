@@ -2,6 +2,26 @@
 // $Id$
 
 /**
+ * Implementation of hook_requirements().
+ */
+function vs_webform_requirements($phrase) {
+  if ($phrase != 'runtime' ) {
+    return;
+  }
+
+  if ( variable_get('vs_webform_key','') == '' )
+  {
+    return array('vs_webform' => array(
+      'title' => 'Vote Smart API key required',
+      'severity' => REQUIREMENT_ERROR,
+      'description' => l(t('Register for a Vote Smart API key'), 'http://www.votesmart.org/user_register.php', array('attributes' => array('target' => '_blank'))) . t(', then add it to the ') . l(t('Vote Smart Webform configuration page.'), 'admin/settings/vs_webform'),
+
+    ));
+  }
+ 
+}
+
+/**
  * Implementation of hook_menu().
  */
 function vs_webform_menu() {
