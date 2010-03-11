@@ -42,7 +42,7 @@ function _webform_defaults_vs_webform() {
  *   An array of form items to be displayed on the edit component page
  */
 function _webform_edit_vs_webform($component) {
-  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  include('vs_webform.defines.inc');
   
   $form = array('extra' => array());
   $form['extra']['state'] = array(
@@ -196,7 +196,7 @@ function _webform_edit_vs_webform_state_validate($element, &$form_state) {
  *   each value saved in this field.
  */
 function _webform_render_vs_webform($component, $value = NULL) {
-  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  include('vs_webform.defines.inc');
 
   if ( !empty($value) )
     $value = unserialize($value[0]);
@@ -314,7 +314,7 @@ function _webform_render_vs_webform($component, $value = NULL) {
  * @return array of candidate form elements
  */
 function vs_webform_candidate_form_elements($args, $component, &$jumper_element = NULL) {
-  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  include('vs_webform.defines.inc');
 
   $candidates = $candidate_elements = $cand_names = array();
 

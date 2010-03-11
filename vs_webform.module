@@ -236,14 +236,14 @@ function _vs_webform_api($request, $args = array(), $item = NULL) {
 }
 
 function vs_webform_is_us_state($state_abbr) {
-  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  include('vs_webform.defines.inc');
   return isset($VS_WEBFORM_US_STATES[$state_abbr]);
 }
 
 //office types and ids are the same,
 //keeping language the same as votesmart api
 function vs_webform_is_office_type($officeType) {
-  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  include('vs_webform.defines.inc');
   return isset($VS_WEBFORM_OFFICE_TYPES[$officeType]);
 }
 
