@@ -48,7 +48,7 @@ function _webform_edit_vs_webform($component) {
   $form['extra']['state'] = array(
     '#type' => 'select',
     '#title' => t('Default State'),
-    '#description' => t('Specify Default State, has no effect if zip is specified'),
+    '#description' => t('Pick a default state. This has no effect if a zip is specified'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['state'],
     '#element_validate' => array('_webform_edit_vs_webform_default_state_validate'),
@@ -57,7 +57,7 @@ function _webform_edit_vs_webform($component) {
 
   $form['extra']['hide_state'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Hide State on Form, don\'t allow user to change value'),
+    '#title' => t('Hide state on form, don\'t allow user to change value.'),
     '#weight'  => -1.15,
     '#default_value' => $component['extra']['hide_state']
   );
@@ -66,24 +66,16 @@ function _webform_edit_vs_webform($component) {
     '#type' => 'select',
     '#multiple' => TRUE,
     '#title' => t('Default Office(s)'),
-    '#description' => t('Show only officials in these offices. If you all offices leave this blank.'),
+    '#description' => t('Show only officials in these offices. Leave blank to show all offices.'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['office_types'],
     '#options' => array_merge(array('' => ''), $VS_WEBFORM_OFFICE_TYPES)
   );
 
-  $form['extra']['hide_state'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Hide State on Form, don\'t allow user to change value'),
-    '#weight'  => -1.15,
-    '#default_value' => $component['extra']['hide_state']
-  );
-
-
   $form['extra']['zip'] = array(
     '#type' => 'textfield',
     '#title' => t('Default Zip'),
-    '#description' => t('Leave blank if you wish to use the State dropdown on form.'),
+    '#description' => t('Leave blank if you wish to use the state dropdown on form.'),
     '#weight' => -1.1,
     '#size' => '10',
     '#maxlength' => 10,
@@ -98,6 +90,10 @@ function _webform_edit_vs_webform($component) {
     '#default_value' => $component['extra']['hide_zip']
   );
 
+/*
+  //these are not valid anymore due to slow performance
+  //may use in future
+
   $form['extra']['allow_candidates_without_email'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow candidates without email to be checked.'),
@@ -111,6 +107,7 @@ function _webform_edit_vs_webform($component) {
     '#weight'  => 0,
     '#default_value' => $component['extra']['hide_no_email_warnings']
   );
+*/
 
 
   $form['extra']['name_format'] = array(
@@ -181,8 +178,6 @@ function _webform_edit_vs_webform_state_validate($element, &$form_state) {
     form_error($element, t('!value is not a valid state.', array('!value' => $state)));
   }
 }
-
-
 
 /**
  * Render a Webform component to be part of a form.
