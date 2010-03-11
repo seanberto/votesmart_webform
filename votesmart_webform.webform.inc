@@ -35,29 +35,6 @@ function _webform_defaults_votesmart() {
 }
 
 /**
- * Given candidate and tokenized format string, return candidates name formatted.
- * @param $candidate candidate array object
- * @param $format tokenized tring used to format name
- * @return string containing candidate's name formatted
- */
-function _votesmart_webform_format_name($candidate, $format = '!last !suffix, !first') {
-  if ( !is_array($candidate) ) return '';
-
-  $name = t($format, array(
-    '!title' => $candidate['title'],
-    '!first' => $candidate['firstName'],
-    '!last' =>  $candidate['lastName'],
-    '!suffix' => $candidate['suffix'],
-    '!middle' => $candidate['middleName'],
-    '!nick' => $candidate['nickName']
-  ));
-  $name = trim($name);
-  $name = preg_replace('@ +@', ' ', $name);
-  $name = str_replace(' ,', ',', $name);
-  return $name;
-}
-
-/**
  * Generate the form for editing votesmart_webform component
  * @param $component
  *   A Webform component array.
@@ -116,21 +93,21 @@ function _webform_edit_votesmart($component) {
 
   $form['extra']['hide_zip'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Hide Zip on form, don\'t allow user to change value.'),
+    '#title' => t('Hide zip on form, don\'t allow user to change value.'),
     '#weight'  => -1.05,
     '#default_value' => $component['extra']['hide_zip']
   );
 
   $form['extra']['allow_candidates_without_email'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Allow Candidates Without Email to be Checked'),
+    '#title' => t('Allow candidates without email to be checked.'),
     '#weight'  => 0,
     '#default_value' => $component['extra']['allow_candidates_without_email']
   );
 
   $form['extra']['hide_no_email_warnings'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Hide No Email Warning Descriptions'),
+    '#title' => t('Hide no email warning descriptions.'),
     '#weight'  => 0,
     '#default_value' => $component['extra']['hide_no_email_warnings']
   );
@@ -138,7 +115,7 @@ function _webform_edit_votesmart($component) {
 
   $form['extra']['name_format'] = array(
     '#type' => 'textfield',
-    '#title' => t('Candidate Name Format'),
+    '#title' => t('Candidate name format'),
     '#weight' => 0,
     '#description' => t('valid tokens include: !title !first !middle !last !suffix !nick ... extra spaces are trimmed'),
     '#default_value' => $component['extra']['name_format']
@@ -377,17 +354,17 @@ function votesmart_webform_candidate_form_elements($args, $component, &$jumper_e
         '#title' => $cand_name,
       );
 
-      if ( !$component['extra']['hide_no_email_warnings'] && !isset($candidates[$cand_id]['Email']) ) {     
+      if ( !$component['extra']['hide_no_email_warnings'] && !isset($candidates[$cand_id]['email']) ) {     
         if ( !$component['extra']['allow_candidates_without_email'] )
           $element['#disabled'] = TRUE;
         $element['#description'] = t('No email found for !candidate.', array('!candidate' => $cand_name));
 
-        if ( isset($candidates[$cand_id]['Webmail']) || isset($candidate[$cand_id]['Website']) ) {
-          if ( isset($candidates[$cand_id]['Webmail']) ) {       
-            $website = $candidates[$cand_id]['Webmail'];
+        if ( isset($candidates[$cand_id]['webmail']) || isset($candidate[$cand_id]['website']) ) {
+          if ( isset($candidates[$cand_id]['webmail']) ) {       
+            $website = $candidates[$cand_id]['webmail'];
           }      
           else
-            $website = $candidates[$cand_id]['Website'];
+            $website = $candidates[$cand_id]['website'];
 
           $element['#description'] = t('No email found for !candidate. Try contacting them at <a target="_blank" rel="nofollow" href="!website">their&nbsp;website</a>.', array(
             '!candidate' => $cand_name,
@@ -461,8 +438,8 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
       //sanity check
       if ( $checked ) {
         $name = _votesmart_webform_format_name($c, $component['extra']['name_format']);
-        if ( !empty($c['Email']) ) {
-          $e = $c['Email'];
+        if ( !empty($c['email']) ) {
+          $e = $c['email'];
           $name .= $format == 'text' ? ' ' . $e : ' ' . l($e, 'mailto:' . $e);
         }
         $cand_names[] = $name;
@@ -520,8 +497,8 @@ function _webform_submit_votesmart($component, &$value) {
     }
     else{
       $candidate = votesmart_webform_get_candidate($cand_id, NULL, TRUE);
-      if ( !empty($candidate['Email']) ) {
-        $ret[] = $candidate['Email'];
+      if ( !empty($candidate['email']) ) {
+        $ret[] = $candidate['email'];
       }
     }
   }
@@ -648,10 +625,17 @@ function _webform_csv_data_votesmart($component, $export_options, $value) {
 
   $v = unserialize($value[0]);
   $v = $v['votesmart'];
+
+  $cand_ids = '';
+  if ( !empty($v['candidates']) && is_array($v['candidates']) )
+  {
+    $cand_ids = implode(';', array_keys($v['candidates']));
+  }
+
   return array(
     $v['state'],
     $v['zip'],
-    implode(';', array_keys($v['candidates']))
+    $cand_ids
   );
 }
 
