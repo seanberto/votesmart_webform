@@ -4,25 +4,25 @@
 /**
  * Implementation of hook_menu().
  */
-function votesmart_webform_menu() {
+function vs_webform_menu() {
   $items = array();
 
   // Admin Settings.
-  $items['admin/settings/votesmart_webform'] = array(
+  $items['admin/settings/vs_webform'] = array(
     'title' => 'Vote smart webform',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('votesmart_webform_admin_settings'),
+    'page arguments' => array('vs_webform_admin_settings'),
     'access arguments' => array('administer site configuration'),
     'description' => 'Configuration for Vote Smart webform.',
     'type' => MENU_NORMAL_ITEM,
   );
 
-  $items['votesmart_webform/ahah/get_candidates'] = array(
+  $items['vs_webform/ahah/get_candidates'] = array(
     'title' => 'AHAH callback for vote smart webform',
-    'page callback' => 'votesmart_webform_ahah_get_candidates',
+    'page callback' => 'vs_webform_ahah_get_candidates',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
-    'file' => 'votesmart_webform.webform.inc'
+    'file' => 'vs_webform.component.inc'
   );
 
   return $items;
@@ -31,19 +31,19 @@ function votesmart_webform_menu() {
 /**
  * Implementation of hook_init().
  */
-function votesmart_webform_init() {
-  $path = drupal_get_path('module', 'votesmart_webform');
-  drupal_add_css($path . '/votesmart_webform.css', 'module');
-  drupal_add_js($path . '/votesmart_webform.js', 'module');
+function vs_webform_init() {
+  $path = drupal_get_path('module', 'vs_webform');
+  drupal_add_css($path . '/vs_webform.css', 'module');
+  drupal_add_js($path . '/vs_webform.js', 'module');
 }
 
 /**
  * Implementation of hook_webform_component_info().
  */
-function votesmart_webform_webform_component_info() {
-  //component was originally called votesmart_webform,
+function vs_webform_webform_component_info() {
+  //component was originally called vs_webform,
   //but it was too long? m got chopped off.
-  return array('votesmart' => array(
+  return array('vs_webform' => array(
     'type' => 'email',
     'label' => t('Vote Smart Lookup'),
     'description' => t('Looks up Representative for Given Zip Code'),
@@ -54,7 +54,7 @@ function votesmart_webform_webform_component_info() {
       'email_name' => FALSE,// Allow this field to be used as an e-mail SUBJECT or FROM name.
       'required' => TRUE,// This field may be toggled as required or not.
     ),
-    'file' => 'votesmart_webform.webform.inc'
+    'file' => 'vs_webform.component.inc'
   ));
 }
 
@@ -67,24 +67,24 @@ function votesmart_webform_webform_component_info() {
  *   An "array of arrays", keyed by content-types. The 'handler' slot
  *   should point to the PHP class implementing this flag.
  */
-function votesmart_webform_webform_exporters() {
+function vs_webform_webform_exporters() {
   return array(
-    'votesmart_webform_delimited' => array(
+    'vs_webform_delimited' => array(
       'title' => t('Vote Smart') . ' ' . t('Delimited text'),
       'description' => t('Submissions Span multiple rows, depending on candidates selected') . ' ' . t('A plain text file delimited by commas, tabs, or other characters.'),
-      'handler' => 'votesmart_webform_exporter_delimited',
+      'handler' => 'vs_webform_exporter_delimited',
     ),
-    'votesmart_webform_excel' => array(
+    'vs_webform_excel' => array(
       'title' => t('Vote Smart') . ' ' . t('Microsoft Excel'),
       'description' => t('Submissions Span multiple rows, depending on candidates selected') . ' ' . t('A file readable by Microsoft Excel.'),
-      'handler' => 'votesmart_webform_exporter_excel',
+      'handler' => 'vs_webform_exporter_excel',
     ),
   );
 }
 
 module_load_include('inc', 'webform', 'includes/webform.export');
-class votesmart_webform_exporter_delimited extends webform_exporter_delimited {
-  var $component_name = 'votesmart';
+class vs_webform_exporter_delimited extends webform_exporter_delimited {
+  var $component_name = 'vs_webform';
   var $cand_idx = NULL;
   var $cand_headers = array(
     'officials_name',
@@ -130,9 +130,9 @@ class votesmart_webform_exporter_delimited extends webform_exporter_delimited {
         //cell has data, try to expand on it
         $cand_ids = explode(';', $data[$this->cand_idx]);
         foreach ($cand_ids as $cand_id) {
-          $c = votesmart_webform_get_candidate($cand_id);
+          $c = vs_webform_get_candidate($cand_id);
           $cand_data = array(
-            _votesmart_webform_format_name($c),
+            _vs_webform_format_name($c),
             $c['email'],
             $c['website'],
             $c['phone'],
@@ -159,7 +159,7 @@ class votesmart_webform_exporter_delimited extends webform_exporter_delimited {
   }
 }
 
-class votesmart_webform_exporter_excel extends votesmart_webform_exporter_delimited {
+class vs_webform_exporter_excel extends vs_webform_exporter_delimited {
   var $delimiter;
 
   function webform_exporter_excel($options) {
@@ -178,22 +178,22 @@ class votesmart_webform_exporter_excel extends votesmart_webform_exporter_delimi
 /**
  * Implementation of hook_admin_settings().
  */
-function votesmart_webform_admin_settings() {
+function vs_webform_admin_settings() {
   $form = array();
   $form['api'] = array(
     '#type' => 'fieldset',
     '#title' => ('API Settings')
   );
-  $form['api']['votesmart_webform_host'] = array(
+  $form['api']['vs_webform_host'] = array(
     '#type' => 'textfield',
     '#title' => t('Vote Smart API server'),
-    '#default_value' => variable_get('votesmart_webform_host', 'http://api.votesmart.org/'),
+    '#default_value' => variable_get('vs_webform_host', 'http://api.votesmart.org/'),
   );
-  $form['api']['votesmart_webform_key'] = array(
+  $form['api']['vs_webform_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Vote Smart API key'),
     '#description' => l(t('Register for key.'), 'http://www.votesmart.org/user_register.php', array('attributes' => array('target' => '_blank'))),
-    '#default_value' => variable_get('votesmart_webform_key',''),
+    '#default_value' => variable_get('vs_webform_key',''),
   );
 
   return system_settings_form($form);
@@ -202,9 +202,9 @@ function votesmart_webform_admin_settings() {
 /**
  * Same Request function used by votesmart module
  */
-function _votesmart_webform_api($request, $args = array(), $item = NULL) {
-  $key = variable_get('votesmart_webform_key', '');
-  $url = variable_get('votesmart_webform_host', 'http://api.votesmart.org/');
+function _vs_webform_api($request, $args = array(), $item = NULL) {
+  $key = variable_get('vs_webform_key', '');
+  $url = variable_get('vs_webform_host', 'http://api.votesmart.org/');
 
   // Convert arguments into a request string.
   $args = array_merge($args, array('key' => $key));
@@ -238,26 +238,26 @@ function _votesmart_webform_api($request, $args = array(), $item = NULL) {
   return $ret;
 }
 
-function votesmart_webform_is_us_state($state_abbr) {
-  include('votesmart_webform.defines.php');
-  return isset($VOTESMART_WEBFORM_US_STATES[$state_abbr]);
+function vs_webform_is_us_state($state_abbr) {
+  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  return isset($vs_webform_US_STATES[$state_abbr]);
 }
 
 //office types and ids are the same,
 //keeping language the same as votesmart api
-function votesmart_webform_is_office_type($officeType) {
-  include('votesmart_webform.defines.php');
-  return isset($VOTESMART_WEBFORM_OFFICE_TYPES[$officeType]);
+function vs_webform_is_office_type($officeType) {
+  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  return isset($vs_webform_OFFICE_TYPES[$officeType]);
 }
 
 
-function votesmart_webform_is_zip($zip) {
+function vs_webform_is_zip($zip) {
   return preg_match('/^[0-9]{5}([- ]?[0-9]{4})?$/', $zip);
 }
 
 
 
-function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $full = TRUE) {
+function vs_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $full = TRUE) {
   $candidateId .= '';//convert to string
 
   static $candidates;//cache candidates
@@ -272,7 +272,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
     //only hit the database if we need more than the name
     //or haven't been provided any info
     if ( $full || empty($partial_candidate_xml)) {
-      $candidate_data = cache_get('votesmart_webform-candidate-' . $candidateId);
+      $candidate_data = cache_get('vs_webform-candidate-' . $candidateId);
       $c = $candidate_data->data;
     }
 
@@ -280,8 +280,8 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
       //not scoped so we have opportunity to fix candidate name
       //if it is missing from partial $partial_candidate_xml
       if ( $full ) {
-        $c_xml_web = _votesmart_webform_api('Address.getOfficeWebAddress', array('candidateId' => $candidateId));
-        $c_xml_addr = _votesmart_webform_api('Address.getOffice', array('candidateId' => $candidateId), 'office');
+        $c_xml_web = _vs_webform_api('Address.getOfficeWebAddress', array('candidateId' => $candidateId));
+        $c_xml_addr = _vs_webform_api('Address.getOffice', array('candidateId' => $candidateId), 'office');
       }
       //officials can have multiple offices listed,
       //we are only saving the first one
@@ -352,7 +352,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
       }
 
       if ( $full ) {
-        cache_set('votesmart_webform-candidate-' . $candidateId, $c, 'cache', CACHE_TEMPORARY);
+        cache_set('vs_webform-candidate-' . $candidateId, $c, 'cache', CACHE_TEMPORARY);
       }
     }
 
@@ -362,7 +362,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
   return $candidates[$candidateId];
 }
 
-function votesmart_webform_get_candidates($args) {
+function vs_webform_get_candidates($args) {
   $args['zip'] = preg_replace('@[^\d]@', '', $args['zip']);//strip non digits
 
   $zip = $args['zip'];
@@ -370,7 +370,7 @@ function votesmart_webform_get_candidates($args) {
   $officeTypes = $args['officeTypes'];
   if ( is_array($officeTypes) ) {
     foreach ($officeTypes as $k => $office_type ) {
-      if ( !votesmart_webform_is_office_type($office_type) ) {
+      if ( !vs_webform_is_office_type($office_type) ) {
         unset($officeTypes[$k]);
       }
     }
@@ -380,7 +380,7 @@ function votesmart_webform_get_candidates($args) {
 
   unset($args['full']);
 
-  $query_key = 'votesmart_webform-' . serialize($args);
+  $query_key = 'vs_webform-' . serialize($args);
 
   $cached_query = cache_get($query_key);
   if ( $cached_query ) {
@@ -389,16 +389,16 @@ function votesmart_webform_get_candidates($args) {
 
   $args = array();//set this to empty array as it is used later
 
-  if ( votesmart_webform_is_zip($zip) ) {
+  if ( vs_webform_is_zip($zip) ) {
     $args = array('zip5' => substr($zip, 0, 5) );
     if ( strlen($zip) == 9 )
       $args['zip4'] = substr($zip, 5, 9);
   
-    $candidates = _votesmart_webform_api('Officials.getByZip', $args, 'candidate');
+    $candidates = _vs_webform_api('Officials.getByZip', $args, 'candidate');
   }
-  elseif ( votesmart_webform_is_us_state($state) ) {
+  elseif ( vs_webform_is_us_state($state) ) {
     $args = array('stateId' => $state );
-    $candidates = _votesmart_webform_api('Officials.getStatewide', $args, 'candidate');
+    $candidates = _vs_webform_api('Officials.getStatewide', $args, 'candidate');
   }
   else return array();
 
@@ -407,7 +407,7 @@ function votesmart_webform_get_candidates($args) {
   if ( is_array($candidates) ) {
     $do_office_check = !empty($officeTypes) && is_array($officeTypes);
     foreach ($candidates as $c) {
-      $candidate = votesmart_webform_get_candidate($c->candidateId, $c, $full);
+      $candidate = vs_webform_get_candidate($c->candidateId, $c, $full);
       if ( empty($candidate) || ( $do_office_check && !in_array($candidate['officeTypeId'], $officeTypes) ) ) {
         continue;
       }
@@ -425,7 +425,7 @@ function votesmart_webform_get_candidates($args) {
  * @param $format tokenized tring used to format name
  * @return string containing candidate's name formatted
  */
-function _votesmart_webform_format_name($candidate, $format = '!last !suffix, !first') {
+function _vs_webform_format_name($candidate, $format = '!last !suffix, !first') {
   if ( !is_array($candidate) ) return '';
 
   $name = t($format, array(

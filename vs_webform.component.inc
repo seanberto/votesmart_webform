@@ -7,11 +7,11 @@
  */
 
 /**
- * Specify the default properties of votesmart_webform component
+ * Specify the default properties of vs_webform component
  *
  * @return An array defining the default structure of a component.
  */
-function _webform_defaults_votesmart() {
+function _webform_defaults_vs_webform() {
   return array(
     'name' => '',
     'form_key' => NULL,
@@ -35,15 +35,15 @@ function _webform_defaults_votesmart() {
 }
 
 /**
- * Generate the form for editing votesmart_webform component
+ * Generate the form for editing vs_webform component
  * @param $component
  *   A Webform component array.
  * @return
  *   An array of form items to be displayed on the edit component page
  */
-function _webform_edit_votesmart($component) {
-  include('votesmart_webform.defines.php');
-
+function _webform_edit_vs_webform($component) {
+  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
+  
   $form = array('extra' => array());
   $form['extra']['state'] = array(
     '#type' => 'select',
@@ -51,8 +51,8 @@ function _webform_edit_votesmart($component) {
     '#description' => t('Specify Default State, has no effect if zip is specified'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['state'],
-    '#element_validate' => array('_webform_edit_votesmart_default_state_validate'),
-    '#options' => array_merge(array('' => ''), $VOTESMART_WEBFORM_US_STATES)
+    '#element_validate' => array('_webform_edit_vs_webform_default_state_validate'),
+    '#options' => array_merge(array('' => ''), $vs_webform_US_STATES)
   );
 
   $form['extra']['hide_state'] = array(
@@ -69,7 +69,7 @@ function _webform_edit_votesmart($component) {
     '#description' => t('Show only officials in these offices. If you all offices leave this blank.'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['office_types'],
-    '#options' => array_merge(array('' => ''), $VOTESMART_WEBFORM_OFFICE_TYPES)
+    '#options' => array_merge(array('' => ''), $vs_webform_OFFICE_TYPES)
   );
 
   $form['extra']['hide_state'] = array(
@@ -88,7 +88,7 @@ function _webform_edit_votesmart($component) {
     '#size' => '10',
     '#maxlength' => 10,
     '#default_value' => $component['extra']['zip'],
-    '#element_validate' => array('_webform_edit_votesmart_default_zip_validate'),
+    '#element_validate' => array('_webform_edit_vs_webform_default_zip_validate'),
   );
 
   $form['extra']['hide_zip'] = array(
@@ -129,11 +129,11 @@ function _webform_edit_votesmart($component) {
  * @param $zip_element The zip form element.
  * @param $form_state The full form state for the webform.
  */
-function _webform_edit_votesmart_default_zip_validate($element, &$form_state) {
+function _webform_edit_vs_webform_default_zip_validate($element, &$form_state) {
   $zip = $element['#value'];//alias
   if ( empty($zip) ) return;
 
-  if ( !votesmart_webform_is_zip($zip) ) {
+  if ( !vs_webform_is_zip($zip) ) {
     form_error($element, t('!value is not a valid zip code.', array('!value' => $zip)));
   }
 }
@@ -143,12 +143,12 @@ function _webform_edit_votesmart_default_zip_validate($element, &$form_state) {
  * @param $element The zip form element.
  * @param $form_state The full form state for the webform.
  */
-function _webform_edit_votesmart_zip_validate($element, &$form_state) {
+function _webform_edit_vs_webform_zip_validate($element, &$form_state) {
   $zip = $element['#value'];//alias
   if ( empty($zip) )
     form_error($element, t('zip can not be blank.', array('!value' => $zip)));
 
-  if ( !votesmart_webform_is_zip($zip) ) {
+  if ( !vs_webform_is_zip($zip) ) {
     form_error($element, t('!value is not a valid zip code.', array('!value' => $zip)));
   }
 }
@@ -158,11 +158,11 @@ function _webform_edit_votesmart_zip_validate($element, &$form_state) {
  * @param $element The state form element.
  * @param $form_state The full form state for the webform.
  */
-function _webform_edit_votesmart_default_state_validate($element, &$form_state) {
+function _webform_edit_vs_webform_default_state_validate($element, &$form_state) {
   $state = $element['#value'];//alias
   if ( empty($state) ) return;
 
-  if ( !votesmart_webform_is_us_state($state) ) {
+  if ( !vs_webform_is_us_state($state) ) {
     form_error($element, t('!value is not a valid state.', array('!value' => $state)));
   }
 }
@@ -172,12 +172,12 @@ function _webform_edit_votesmart_default_state_validate($element, &$form_state) 
  * @param $element The state form element.
  * @param $form_state The full form state for the webform.
  */
-function _webform_edit_votesmart_state_validate($element, &$form_state) {
+function _webform_edit_vs_webform_state_validate($element, &$form_state) {
   $state = $element['#value'];//alias
   if ( empty($state) )
     form_error($element, t('Please select a state.'));
 
-  if ( !votesmart_webform_is_us_state($state) ) {
+  if ( !vs_webform_is_us_state($state) ) {
     form_error($element, t('!value is not a valid state.', array('!value' => $state)));
   }
 }
@@ -195,45 +195,45 @@ function _webform_edit_votesmart_state_validate($element, &$form_state) {
  *   configuration. This value will always be an array, keyed numerically for
  *   each value saved in this field.
  */
-function _webform_render_votesmart($component, $value = NULL) {
-  include('votesmart_webform.defines.php');
+function _webform_render_vs_webform($component, $value = NULL) {
+  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
 
   if ( !empty($value) )
     $value = unserialize($value[0]);
 
-  if ( isset($value['votesmart']) ) {
-    if ( isset($value['votesmart']['zip']) )
-      $component['extra']['zip'] = $value['votesmart']['zip'];
-    if ( isset($value['votesmart']['state']) )
-      $component['extra']['state'] = $value['votesmart']['state'];
-    if ( isset($value['votesmart']['office_types']) )
-      $component['extra']['office_types'] = $value['votesmart']['office_types'];
+  if ( isset($value['vs_webform']) ) {
+    if ( isset($value['vs_webform']['zip']) )
+      $component['extra']['zip'] = $value['vs_webform']['zip'];
+    if ( isset($value['vs_webform']['state']) )
+      $component['extra']['state'] = $value['vs_webform']['state'];
+    if ( isset($value['vs_webform']['office_types']) )
+      $component['extra']['office_types'] = $value['vs_webform']['office_types'];
 
   }
   
   $dom_id = 'webform-component-' . $component['form_key'];
   $form = array(
-    '#prefix' => '<div id="' . $dom_id . '" class="webform-component-votesmart">',
-    'votesmart' => array(),
-    '#suffix' => '</div><!--/#' . $dom_id . ' .webform-component-votesmart-->',
+    '#prefix' => '<div id="' . $dom_id . '" class="webform-component-vs-webform">',
+    'vs_webform' => array(),
+    '#suffix' => '</div><!--/#' . $dom_id . ' .webform-component-vs-webform-->',
     '#weight' => $component['weight']
   );
 
   //HACK: Need to find a better way
-  $votesmart_post = _votesmart_webform_array_key_search($_POST, 'votesmart');
-  if ( $votesmart_post ) {
-    if ( isset($votesmart_post['votesmart']) ) {
-      $votesmart_post = $votesmart_post['votesmart'];
+  $vs_webform_post = _vs_webform_array_key_search($_POST, 'vs_webform');
+  if ( $vs_webform_post ) {
+    if ( isset($vs_webform_post['vs_webform']) ) {
+      $vs_webform_post = $vs_webform_post['vs_webform'];
     }
-    $component['extra']['zip'] = $votesmart_post['zip'];
-    $component['extra']['state'] = $votesmart_post['state'];
-    $component['extra']['office_types'] = $votesmart_post['office_types'];
+    $component['extra']['zip'] = $vs_webform_post['zip'];
+    $component['extra']['state'] = $vs_webform_post['state'];
+    $component['extra']['office_types'] = $vs_webform_post['office_types'];
     if ( isset($component['extra']['office_types']) )
       $component['extra']['office_types'] = unserialize($component['extra']['office_types']);
   }
 
   if ( !$component['extra']['hide_zip'] ) {
-    $form['votesmart']['zip'] = array(
+    $form['vs_webform']['zip'] = array(
       '#type' => 'textfield',
       '#title' => t('Zip'),
       '#required' => TRUE,
@@ -241,68 +241,68 @@ function _webform_render_votesmart($component, $value = NULL) {
       '#maxlength' => 10,
       '#default_value' => $component['extra']['zip'],
       '#description'   => t('Postal Code in format 12345 or 12345-1234'),
-      '#element_validate' => array('_webform_edit_votesmart_zip_validate'),
+      '#element_validate' => array('_webform_edit_vs_webform_zip_validate'),
       '#ahah' => array(
         'event' => 'change',
         'wrapper' => $dom_id,
-        'path' => 'votesmart_webform/ahah/get_candidates',
+        'path' => 'vs_webform/ahah/get_candidates',
         'progress' => array('type' => 'throbber')
       )
     );
   }
 
   if ( !$component['extra']['hide_state'] ) {
-    $form['votesmart']['state'] = array(
+    $form['vs_webform']['state'] = array(
       '#type' => 'select',
       '#title' => t('State'),
-      '#options' => array_merge(array('' => ''), $VOTESMART_WEBFORM_US_STATES),
+      '#options' => array_merge(array('' => ''), $vs_webform_US_STATES),
       '#multiple' => FALSE,
       '#required' => TRUE,
       '#default_value' => $component['extra']['state'],
-      '#element_validate' => array('_webform_edit_votesmart_state_validate'),
+      '#element_validate' => array('_webform_edit_vs_webform_state_validate'),
       '#ahah' => array(
         'event' => 'change',
         'wrapper' => $dom_id,
-        'path' => 'votesmart_webform/ahah/get_candidates',
+        'path' => 'vs_webform/ahah/get_candidates',
         'progress' => array('type' => 'throbber')
       )
     );
   }
 
-  $form['votesmart']['office_types'] = array(
+  $form['vs_webform']['office_types'] = array(
     '#type' => 'hidden',
     '#value' => serialize($component['extra']['office_types'])
   );
 
-  $form['votesmart']['jumper'] = array();//used to jump to various offices
+  $form['vs_webform']['jumper'] = array();//used to jump to various offices
 
-  $zip = $form['votesmart']['zip']['#default_value'];//alias
-  $state = $form['votesmart']['state']['#default_value'];//alias
+  $zip = $form['vs_webform']['zip']['#default_value'];//alias
+  $state = $form['vs_webform']['state']['#default_value'];//alias
 
   $office_types = array();
   if ( !empty($component['extra']['office_types']) ) {
     $office_types = $component['extra']['office_types'];
   }
 
-  $candidates = votesmart_webform_candidate_form_elements(array('state' => $state, 'zip' => $zip, 'officeTypes' => $office_types), $component, $form['votesmart']['jumper']);
+  $candidates = vs_webform_candidate_form_elements(array('state' => $state, 'zip' => $zip, 'officeTypes' => $office_types), $component, $form['vs_webform']['jumper']);
 
   if ( !empty($candidates) ) {
     $candidate_count = count($candidates);
-    $form['votesmart']['candidates_prefix'] = array(
+    $form['vs_webform']['candidates_prefix'] = array(
       '#type' => 'markup',
-      '#value' => '<div class="votesmart-webform-candidate-wrapper"><span class="votesmart-webform-count">' . t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)) . '</span>'
+      '#value' => '<div class="vs-webform-candidate-wrapper"><span class="vs-webform-count">' . t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)) . '</span>'
     );
 
-    $form['votesmart']['candidates'] = $candidates;
-    $form['votesmart']['candidate_suffix'] = array(
+    $form['vs_webform']['candidates'] = $candidates;
+    $form['vs_webform']['candidate_suffix'] = array(
       '#type' => 'markup',
-      '#value' => '</div><!--/.votesmart-webform-candidate-wrapper-->'
+      '#value' => '</div><!--/.vs-webform-candidate-wrapper-->'
     );
   }
 
-  if ( is_array($value['votesmart']['candidates']) )
-    foreach ($value['votesmart']['candidates'] as $k => $v )
-      $form['votesmart']['candidates'][$k]['#default_value'] = $v;
+  if ( is_array($value['vs_webform']['candidates']) )
+    foreach ($value['vs_webform']['candidates'] as $k => $v )
+      $form['vs_webform']['candidates'][$k]['#default_value'] = $v;
 
   return $form;
 }
@@ -313,19 +313,19 @@ function _webform_render_votesmart($component, $value = NULL) {
  * @param $jumper_element html element containing list used to jump to various branches in the list
  * @return array of candidate form elements
  */
-function votesmart_webform_candidate_form_elements($args, $component, &$jumper_element = NULL) {
-  include('votesmart_webform.defines.php');
+function vs_webform_candidate_form_elements($args, $component, &$jumper_element = NULL) {
+  module_load_include('inc', 'vs_webform', 'vs_webform.defines');
 
   $candidates = $candidate_elements = $cand_names = array();
 
-  $candidates = votesmart_webform_get_candidates($args);
+  $candidates = vs_webform_get_candidates($args);
   if ( empty($candidates) ) return array();
 
   $cand_names = array();
   foreach ($candidates as $id => $c) {
     if ( !isset($cand_names[$c['officeTypeId']]) )
       $cand_names[$c['officeTypeId']] = array();
-    $cand_names[$c['officeTypeId']][$id] = _votesmart_webform_format_name($c, $component['extra']['name_format']);
+    $cand_names[$c['officeTypeId']][$id] = _vs_webform_format_name($c, $component['extra']['name_format']);
   }
 
   $needs_jumper = count($cand_names) > 1 && count($candidates) > 10;
@@ -333,14 +333,14 @@ function votesmart_webform_candidate_form_elements($args, $component, &$jumper_e
   if ( $needs_jumper ) {
     $jumper_element = array(
       '#type' => 'markup',
-      '#value' => '<ul class="votesmart-webform-jumper">'
+      '#value' => '<ul class="vs-webform-jumper">'
     );
   }
 
   asort($cand_names);
   foreach ($cand_names as $office => $cands ) {
-    $anchor_name = 'votesmart-webform-office-type-' . strtolower($office);
-    $office_label = t($VOTESMART_WEBFORM_OFFICE_TYPES[$office]);
+    $anchor_name = 'vs-webform-office-type-' . strtolower($office);
+    $office_label = t($vs_webform_OFFICE_TYPES[$office]);
     if ( $needs_jumper )
       $jumper_element['#value'] .= '<li><a title="jump to ' . $office_label . '" href="#' . $anchor_name . '">' . $office_label . '</a></li>';
     $candidate_elements[] = array(
@@ -411,7 +411,7 @@ function votesmart_webform_candidate_form_elements($args, $component, &$jumper_e
  *   which will properly format the label and content for use within an e-mail
  *   (such as wrapping the text) or as HTML (ensuring consistent output).
  */
-function _webform_display_votesmart($component, $value, $format = 'html') {
+function _webform_display_vs_webform($component, $value, $format = 'html') {
   if ( !in_array($format, array('html', 'table-cell', 'text')) || empty($value) ) {
     return '';
   }
@@ -428,16 +428,16 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
 
   $value[0] = unserialize($value[0]);
 
-  $candidates = $value[0]['votesmart']['candidates'];
+  $candidates = $value[0]['vs_webform']['candidates'];
   if ( !$candidates ) $candidates = array();
   $cand_names = array();
 
   if ( is_array($candidates) ) {
     foreach ($candidates as $cand_id => $checked ) {
-      $c = votesmart_webform_get_candidate($cand_id);
+      $c = vs_webform_get_candidate($cand_id);
       //sanity check
       if ( $checked ) {
-        $name = _votesmart_webform_format_name($c, $component['extra']['name_format']);
+        $name = _vs_webform_format_name($c, $component['extra']['name_format']);
         if ( !empty($c['email']) ) {
           $e = $c['email'];
           $name .= $format == 'text' ? ' ' . $e : ' ' . l($e, 'mailto:' . $e);
@@ -449,12 +449,12 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
   $o = '';
 
 
-  if ( !empty($value[0]['votesmart']['state']) ) {
-    $o = t('State') . ': ' . $value[0]['votesmart']['state'] . "<br />\r\n";
+  if ( !empty($value[0]['vs_webform']['state']) ) {
+    $o = t('State') . ': ' . $value[0]['vs_webform']['state'] . "<br />\r\n";
   }
 
-  if ( !empty($value[0]['votesmart']['zip']) ) {
-    $o = t('Zip') . ': ' . $value[0]['votesmart']['zip'] . "<br />\r\n";
+  if ( !empty($value[0]['vs_webform']['zip']) ) {
+    $o = t('Zip') . ': ' . $value[0]['vs_webform']['zip'] . "<br />\r\n";
   }
 
   unset($value[0]);
@@ -487,16 +487,16 @@ function _webform_display_votesmart($component, $value, $format = 'html') {
  * through the returned array, validating the emails;
  * If the email is valid webform will send an email.
  */
-function _webform_submit_votesmart($component, &$value) {
-  if ( empty($value) || !is_array($value['votesmart']['candidates']) ) return NULL;
+function _webform_submit_vs_webform($component, &$value) {
+  if ( empty($value) || !is_array($value['vs_webform']['candidates']) ) return NULL;
 
   $ret = array(0 => ''); //placeholder for serialized value
-  foreach ($value['votesmart']['candidates'] as $cand_id => $checked) {
+  foreach ($value['vs_webform']['candidates'] as $cand_id => $checked) {
     if ( !$checked ) {
-      unset($value['votesmart']['candidates'][$cand_id]);
+      unset($value['vs_webform']['candidates'][$cand_id]);
     }
     else{
-      $candidate = votesmart_webform_get_candidate($cand_id, NULL, TRUE);
+      $candidate = vs_webform_get_candidate($cand_id, NULL, TRUE);
       if ( !empty($candidate['email']) ) {
         $ret[] = $candidate['email'];
       }
@@ -506,7 +506,7 @@ function _webform_submit_votesmart($component, &$value) {
   return $ret;
 }
 
-function votesmart_webform_ahah_get_candidates() {
+function vs_webform_ahah_get_candidates() {
   $form_state = array('storage' =>  NULL, 'submitted' => FALSE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
@@ -522,22 +522,22 @@ function votesmart_webform_ahah_get_candidates() {
 
   $output = theme('status_messages');
 
-  $form_portion = _votesmart_webform_element_children_search($form, 'votesmart') ;
+  $form_portion = _vs_webform_element_children_search($form, 'vs_webform') ;
   if ( $form_portion )
     $output .= drupal_render($form_portion);
   
   drupal_json(array('status' => TRUE, 'data' => $output));
 }
 
-function votesmart_webform_form_alter(&$form, $form_state, $form_id) {
+function vs_webform_form_alter(&$form, $form_state, $form_id) {
   if ( preg_match('@webform_(.*)@', $form_id, $matches) ) {
-    if ( $votesmart = _votesmart_webform_element_children_search($form, 'votesmart') ) {
-      $form['#validate'][] = '_votesmart_webform_validate_candidates';
+    if ( $vs_webform = _vs_webform_element_children_search($form, 'vs_webform') ) {
+      $form['#validate'][] = '_vs_webform_validate_candidates';
     }
   }
 }
 
-function _votesmart_webform_element_children_search($form, $key) {
+function _vs_webform_element_children_search($form, $key) {
   $element_children = element_children($form);
   $found = array_search($key, $element_children);
   if ( $found ) return $form[$key];
@@ -545,13 +545,13 @@ function _votesmart_webform_element_children_search($form, $key) {
   if ( !is_array($element_children) ) return FALSE;
 
   foreach ($element_children as $e) {
-    $result = _votesmart_webform_element_children_search($form[$e], $key);
+    $result = _vs_webform_element_children_search($form[$e], $key);
     if ( $result != FALSE ) return $result;
   }
   return FALSE;
 }
 
-function _votesmart_webform_array_key_search($arr, $key) {
+function _vs_webform_array_key_search($arr, $key) {
   if ( !is_array($arr) ) return FALSE;
 
   $found = array_key_exists($key, $arr);
@@ -560,34 +560,34 @@ function _votesmart_webform_array_key_search($arr, $key) {
   if ( !is_array($arr) ) return FALSE;
 
   foreach ($arr as $e) {
-    $result = _votesmart_webform_array_key_search($e, $key);
+    $result = _vs_webform_array_key_search($e, $key);
     if ( $result != FALSE ) return $result;
   }
   return FALSE;
 }
 
-function _votesmart_webform_validate_candidates($form, &$form_state, $first_run = TRUE) {
-  $votesmart = _votesmart_webform_element_children_search($form, 'votesmart');
-  if ( isset($votesmart['votesmart'] ) ) {
-    $votesmart = $votesmart['votesmart'];
+function _vs_webform_validate_candidates($form, &$form_state, $first_run = TRUE) {
+  $vs_webform = _vs_webform_element_children_search($form, 'vs_webform');
+  if ( isset($vs_webform['vs_webform'] ) ) {
+    $vs_webform = $vs_webform['vs_webform'];
   }
 
-  if ( ( isset($votesmart['zip']) && form_get_error($votesmart['zip']) )
-      || ( isset($votesmart['state']) && form_get_error($votesmart['state']) )
+  if ( ( isset($vs_webform['zip']) && form_get_error($vs_webform['zip']) )
+      || ( isset($vs_webform['state']) && form_get_error($vs_webform['state']) )
   ) {
     return; // wait until we have a valid zip or state
   }
   
-  if ( empty($votesmart['candidates']) ) {
-    form_set_error('votesmart', t('Please select one or more officials.'));
+  if ( empty($vs_webform['candidates']) ) {
+    form_set_error('vs_webform', t('Please select one or more officials.'));
   }
 
-  $candidates = element_children($votesmart['candidates']);//alias
+  $candidates = element_children($vs_webform['candidates']);//alias
 
   $error = TRUE;
   if ( is_array($candidates) ) {
     foreach ( $candidates as $cand_id ) {
-      if ( $votesmart['candidates'][$cand_id]['#value'] == 1 ) {
+      if ( $vs_webform['candidates'][$cand_id]['#value'] == 1 ) {
         $error = FALSE;
         break;
       }
@@ -595,22 +595,22 @@ function _votesmart_webform_validate_candidates($form, &$form_state, $first_run 
   }//if is_array
   
   if ( $error )
-    form_set_error('votesmart', t('Please select one or more officials.'));
+    form_set_error('vs_webform', t('Please select one or more officials.'));
 }
 
 /**
  * Implementation of _webform_table_component().
  */
-function _webform_table_votesmart($component, $value) {
-  return _webform_display_votesmart($component, $value, 'table-cell');
+function _webform_table_vs_webform($component, $value) {
+  return _webform_display_vs_webform($component, $value, 'table-cell');
 }
 
 
 /**
  * Implementation of _webform_csv_headers_component().
  */
-function _webform_csv_headers_votesmart($component, $export_options) {
-  $name = 'votesmart';
+function _webform_csv_headers_vs_webform($component, $export_options) {
+  $name = 'vs_webform';
   return array(
     0 => array('', '', ''),
     1 => array($name, $name, $name),
@@ -621,11 +621,11 @@ function _webform_csv_headers_votesmart($component, $export_options) {
 /**
  * Implementation of _webform_csv_data_component().
  */
-function _webform_csv_data_votesmart($component, $export_options, $value) {
+function _webform_csv_data_vs_webform($component, $export_options, $value) {
   if ( !isset($value[0]) ) return '';
 
   $v = unserialize($value[0]);
-  $v = $v['votesmart'];
+  $v = $v['vs_webform'];
 
   $cand_ids = '';
   if ( !empty($v['candidates']) && is_array($v['candidates']) )
