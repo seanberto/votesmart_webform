@@ -610,10 +610,11 @@ function _webform_table_votesmart($component, $value) {
  * Implementation of _webform_csv_headers_component().
  */
 function _webform_csv_headers_votesmart($component, $export_options) {
+  $name = 'votesmart';
   return array(
     0 => array('', '', ''),
-    1 => array($component['name'], $component['name'], $component['name']),
-    2 => array('State', 'Zip', 'Selected Officials')
+    1 => array($name, $name, $name),
+    2 => array($name . '_state', $name . '_zip', 'officials_selected')
   );
 }
 

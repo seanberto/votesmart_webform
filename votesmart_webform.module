@@ -84,37 +84,96 @@ function votesmart_webform_webform_exporters() {
 
 module_load_include('inc', 'webform', 'includes/webform.export');
 class votesmart_webform_exporter_delimited extends webform_exporter_delimited {
-  var $votesmart_idx = NULL;
-  function add_row(&$file_handle, $data) {
-    dsm($data);
-    
-    parent::add_row($file_handle, $data);
-  }
-}
+  var $component_name = 'votesmart';
+  var $cand_idx = NULL;
+  var $cand_headers = array(
+    'officials_name',
+    'officials_email',
+    'officials_website',
+    'officials_phone',
+    'officials_fax',
+    'officials_street',
+    'officials_city',
+    'officials_state',
+    'officials_zip'
+  );
 
-class votesmart_webform_exporter_excel extends webform_exporter_excel {
-  var $votesmart_idx = NULL;
   function add_row(&$file_handle, $data) {
-    if ( $this->votesmart_idx  == NULL ) {
-      $tmp_data = array_map('trim',$data);
-      $tmp = array_search('Votesmart',$tmp_data);
-      if( $tmp != FALSE ) {
-        $this->votesmart_idx = $tmp + 2;//State Zip Selected Candidates
+    if ( $this->cand_idx  == NULL ) {
+      foreach ( $data as $idx => $col ) {
+        if ( strpos($col, $this->component_name) !== FALSE ) {
+          $this->cand_idx = $idx + 2;//State Zip Selected Candidates
+          break;
+        }
       }
     }
-    if( $this->votesmart_idx != NULL && !empty($data[$this->votesmart_idx]) ) {
-      $cand_ids = explode(';',$data[$this->votesmart_idx]);
-      foreach($cand_ids as $cand_id){
-        $data[$this->votesmart_idx] = print_r(votesmart_webform_get_candidate($cand_id),1);
-        parent::add_row($file_handle, $data);  
+    if ( $this->cand_idx != NULL ) {
+      $cand_data = array();
+
+      if ( empty($data[$this->cand_idx]) ) {
+        //no data found, but we know which column has selected candidates
+        //create spacer cells
+        foreach ($this->cand_headers as $header) {
+          $cand_data[] = '';
+        }
       }
+      elseif ( strpos($data[$this->cand_idx], 'officials_selected') !== FALSE ) {
+        //this is a header row, use headers for data
+        $cand_data = $this->cand_headers;
+      }
+      elseif ( strpos($data[$this->cand_idx], $this->component_name) !== FALSE ) {
+        foreach( $this->cand_headers as $header) {
+          $cand_data[] = $data[$this->cand_idx];
+        }
+      }
+      else {
+        //cell has data, try to expand on it
+        $cand_ids = explode(';', $data[$this->cand_idx]);
+        foreach ($cand_ids as $cand_id) {
+          $c = votesmart_webform_get_candidate($cand_id);
+          $cand_data = array(
+            _votesmart_webform_format_name($c),
+            $c['email'],
+            $c['website'],
+            $c['phone'],
+            $c['fax'],
+            $c['address']['street'],
+            $c['address']['city'],
+            $c['address']['state'],
+            $c['address']['zip'],
+          );
+          $tmp = $data;
+          array_splice($tmp, $this->cand_idx, 1, $cand_data);
+          parent::add_row($file_handle,$tmp);
+        }
+        return;
+      }
+      array_splice($data, $this->cand_idx, 1, $cand_data);
+      parent::add_row($file_handle,$data);
     }
     else {
-      parent::add_row($file_handle, $data);
+      //have yet to find selected candidates column
+      //no idea what to do with the row, just add the row as is
+      parent::add_row($file_handle,$data);
     }
   }
 }
 
+class votesmart_webform_exporter_excel extends votesmart_webform_exporter_delimited {
+  var $delimiter;
+
+  function webform_exporter_excel($options) {
+    $options['delimiter'] = '\t';
+    parent::webform_exporter_delimited($options);
+  }
+
+  function set_headers($filename) {
+    drupal_set_header('Content-Type: application/x-msexcel');
+    drupal_set_header("Content-Disposition: attachment; filename=$filename.xls");
+    drupal_set_header('Pragma: public');
+    drupal_set_header('Cache-Control: max-age=0');
+  }
+}
 
 /**
  * Implementation of hook_admin_settings().
@@ -224,19 +283,34 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
         $c_xml_web = _votesmart_webform_api('Address.getOfficeWebAddress', array('candidateId' => $candidateId));
         $c_xml_addr = _votesmart_webform_api('Address.getOffice', array('candidateId' => $candidateId), 'office');
       }
+      //officials can have multiple offices listed,
+      //we are only saving the first one
+      if ( isset($c_xml_addr[0]->phone) )
+      {
+        $c_xml_phone = $c_xml_addr[0]->phone;
+      }
+      else if ( isset($c_xml_addr['phone']) )
+      {
+        $c_xml_phone = $c_xml_addr['phone'];
+      }
+  
+      if ( isset($c_xml_phone) ) {
+        $c['phone'] = trim($c_xml_phone->phone1);
+        $c['fax'] = trim($c_xml_phone->fax1);
+      }
 
+ 
       //officials can have multiple offices listed,
       //we are only saving the first one
       if ( isset($c_xml_addr[0]->address) )
       {
         $c_xml_addr = $c_xml_addr[0]->address;
       }
-
-      if ( isset($c_xml_addr['address']) )
+      else if ( isset($c_xml_addr['address']) )
       {
         $c_xml_addr = $c_xml_addr['address'];
       }
-
+  
       if ( isset($c_xml_addr) ) {
         foreach (array('type', 'street', 'city', 'state', 'zip') as $k) {
           $v = $c_xml_addr->$k;
@@ -269,7 +343,7 @@ function votesmart_webform_get_candidate($candidateId, $partial_candidate_xml = 
 
       if ( is_array($c_xml_web['address']) ) {
         foreach ($c_xml_web['address'] as $addr) {
-          $c[$addr->webAddressType . ''] = $addr->webAddress . '';
+          $c[strtolower($addr->webAddressType . '')] = $addr->webAddress . '';
         }
       }
 
@@ -344,4 +418,28 @@ function votesmart_webform_get_candidates($args) {
 
   return $sanitized_candidates;
 }
+
+/**
+ * Given candidate and tokenized format string, return candidates name formatted.
+ * @param $candidate candidate array object
+ * @param $format tokenized tring used to format name
+ * @return string containing candidate's name formatted
+ */
+function _votesmart_webform_format_name($candidate, $format = '!last !suffix, !first') {
+  if ( !is_array($candidate) ) return '';
+
+  $name = t($format, array(
+    '!title' => $candidate['title'],
+    '!first' => $candidate['firstName'],
+    '!last' =>  $candidate['lastName'],
+    '!suffix' => $candidate['suffix'],
+    '!middle' => $candidate['middleName'],
+    '!nick' => $candidate['nickName']
+  ));
+  $name = trim($name);
+  $name = preg_replace('@ +@', ' ', $name);
+  $name = str_replace(' ,', ',', $name);
+  return $name;
+}
+
 
