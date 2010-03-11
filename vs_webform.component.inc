@@ -52,7 +52,7 @@ function _webform_edit_vs_webform($component) {
     '#weight' => -1.2,
     '#default_value' => $component['extra']['state'],
     '#element_validate' => array('_webform_edit_vs_webform_default_state_validate'),
-    '#options' => array_merge(array('' => ''), $vs_webform_US_STATES)
+    '#options' => array_merge(array('' => ''), $VS_WEBFORM_US_STATES)
   );
 
   $form['extra']['hide_state'] = array(
@@ -69,7 +69,7 @@ function _webform_edit_vs_webform($component) {
     '#description' => t('Show only officials in these offices. If you all offices leave this blank.'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['office_types'],
-    '#options' => array_merge(array('' => ''), $vs_webform_OFFICE_TYPES)
+    '#options' => array_merge(array('' => ''), $VS_WEBFORM_OFFICE_TYPES)
   );
 
   $form['extra']['hide_state'] = array(
@@ -255,7 +255,7 @@ function _webform_render_vs_webform($component, $value = NULL) {
     $form['vs_webform']['state'] = array(
       '#type' => 'select',
       '#title' => t('State'),
-      '#options' => array_merge(array('' => ''), $vs_webform_US_STATES),
+      '#options' => array_merge(array('' => ''), $VS_WEBFORM_US_STATES),
       '#multiple' => FALSE,
       '#required' => TRUE,
       '#default_value' => $component['extra']['state'],
@@ -340,7 +340,7 @@ function vs_webform_candidate_form_elements($args, $component, &$jumper_element 
   asort($cand_names);
   foreach ($cand_names as $office => $cands ) {
     $anchor_name = 'vs-webform-office-type-' . strtolower($office);
-    $office_label = t($vs_webform_OFFICE_TYPES[$office]);
+    $office_label = t($VS_WEBFORM_OFFICE_TYPES[$office]);
     if ( $needs_jumper )
       $jumper_element['#value'] .= '<li><a title="jump to ' . $office_label . '" href="#' . $anchor_name . '">' . $office_label . '</a></li>';
     $candidate_elements[] = array(
