@@ -9,8 +9,7 @@ function vs_webform_requirements($phrase) {
     return;
   }
 
-  if ( variable_get('vs_webform_key','') == '' )
-  {
+  if ( variable_get('vs_webform_key', '') == '' ) {
     return array('vs_webform' => array(
       'title' => 'Vote Smart API key required',
       'severity' => REQUIREMENT_ERROR,
@@ -139,7 +138,7 @@ class vs_webform_exporter_delimited extends webform_exporter_delimited {
         $cand_data = $this->cand_headers;
       }
       elseif ( strpos($data[$this->cand_idx], $this->component_name) !== FALSE ) {
-        foreach( $this->cand_headers as $header) {
+        foreach ( $this->cand_headers as $header) {
           $cand_data[] = $data[$this->cand_idx];
         }
       }
@@ -161,17 +160,17 @@ class vs_webform_exporter_delimited extends webform_exporter_delimited {
           );
           $tmp = $data;
           array_splice($tmp, $this->cand_idx, 1, $cand_data);
-          parent::add_row($file_handle,$tmp);
+          parent::add_row($file_handle, $tmp);
         }
         return;
       }
       array_splice($data, $this->cand_idx, 1, $cand_data);
-      parent::add_row($file_handle,$data);
+      parent::add_row($file_handle, $data);
     }
     else {
       //have yet to find selected candidates column
       //no idea what to do with the row, just add the row as is
-      parent::add_row($file_handle,$data);
+      parent::add_row($file_handle, $data);
     }
   }
 }
@@ -210,7 +209,7 @@ function vs_webform_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Vote Smart API key'),
     '#description' => l(t('Register for key.'), 'http://www.votesmart.org/user_register.php', array('attributes' => array('target' => '_blank'))),
-    '#default_value' => variable_get('vs_webform_key',''),
+    '#default_value' => variable_get('vs_webform_key', ''),
   );
 
   return system_settings_form($form);
@@ -302,12 +301,10 @@ function vs_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $
       }
       //officials can have multiple offices listed,
       //we are only saving the first one
-      if ( isset($c_xml_addr[0]->phone) )
-      {
+      if ( isset($c_xml_addr[0]->phone) ) {
         $c_xml_phone = $c_xml_addr[0]->phone;
       }
-      else if ( isset($c_xml_addr['phone']) )
-      {
+      elseif ( isset($c_xml_addr['phone']) ) {
         $c_xml_phone = $c_xml_addr['phone'];
       }
   
@@ -319,17 +316,15 @@ function vs_webform_get_candidate($candidateId, $partial_candidate_xml = NULL, $
  
       //officials can have multiple offices listed,
       //we are only saving the first one
-      if ( isset($c_xml_addr[0]->address) )
-      {
+      if ( isset($c_xml_addr[0]->address) ) {
         $c_xml_addr = $c_xml_addr[0]->address;
       }
-      else if ( isset($c_xml_addr['address']) )
-      {
+      elseif ( isset($c_xml_addr['address']) ) {
         $c_xml_addr = $c_xml_addr['address'];
       }
   
       if ( isset($c_xml_addr) ) {
-        foreach (array('type', 'street', 'city', 'state', 'zip') as $k) {
+        foreach ( array('type', 'street', 'city', 'state', 'zip') as $k ) {
           $v = $c_xml_addr->$k;
           $v = trim($v);
           if ( !empty($v) ) {

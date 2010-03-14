@@ -271,8 +271,8 @@ function _webform_render_vs_webform($component, $value = NULL) {
 
   $form['vs_webform']['jumper'] = array();//used to jump to various offices
 
-  $zip = $form['vs_webform']['zip']['#default_value'];//alias
-  $state = $form['vs_webform']['state']['#default_value'];//alias
+  $zip = $component['extra']['zip']; //alias
+  $state = $component['extra']['state']; //alias
 
   $office_types = array();
   if ( !empty($component['extra']['office_types']) ) {
@@ -517,9 +517,10 @@ function vs_webform_ahah_get_candidates() {
 
   $output = theme('status_messages');
 
-  $form_portion = _vs_webform_element_children_search($form, 'vs_webform') ;
-  if ( $form_portion )
+  $form_portion = _vs_webform_element_children_search($form, 'vs_webform');
+  if ( $form_portion ) {
     $output .= drupal_render($form_portion);
+  }
   
   drupal_json(array('status' => TRUE, 'data' => $output));
 }
@@ -623,8 +624,7 @@ function _webform_csv_data_vs_webform($component, $export_options, $value) {
   $v = $v['vs_webform'];
 
   $cand_ids = '';
-  if ( !empty($v['candidates']) && is_array($v['candidates']) )
-  {
+  if ( !empty($v['candidates']) && is_array($v['candidates']) ) {
     $cand_ids = implode(';', array_keys($v['candidates']));
   }
 
