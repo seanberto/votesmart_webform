@@ -1,5 +1,5 @@
 //update candidate checkbox
-function votesmart_webform_update_candidate( $candidate, $selected_candidates )
+function vs_webform_update_candidate( $candidate, $selected_candidates )
 {
   var $t = $candidate;
 
@@ -22,10 +22,10 @@ function votesmart_webform_update_candidate( $candidate, $selected_candidates )
 
 }
 
-function votesmart_webform_candidate_wrapper( $candidate_wrapper )
+function vs_webform_candidate_wrapper( $candidate_wrapper )
 {
     if( $candidate_wrapper.length < 1 ) return;
-    $selected_candidates = $('<div class="votesmart-webform-selected-candidates" />');
+    $selected_candidates = $('<div class="vs-webform-selected-candidates" />');
     $selected_candidates_wrapper = $('<div class="form-item">');
 
     $selected_candidates_wrapper.append('<label>Selected Officials:</label>');
@@ -33,22 +33,22 @@ function votesmart_webform_candidate_wrapper( $candidate_wrapper )
 
     $candidate_wrapper.after($selected_candidates_wrapper);
     $('input[type=checkbox]').change(function(){
-      votesmart_webform_update_candidate($(this),$selected_candidates);
+      vs_webform_update_candidate($(this),$selected_candidates);
     }).each(function(){
-      votesmart_webform_update_candidate($(this),$selected_candidates);
+      vs_webform_update_candidate($(this),$selected_candidates);
     });
 
 
 }
 jQuery(function(){
-  $components = $('.webform-component-votesmart');
+  $components = $('.webform-component-vs-webform');
 
   $components.each(function(){
     var $component = $(this);
     var $form = $component.parents('form:first');
     var $zip = $component.find('input[name~=zip]');
     var $state = $component.find('select[name~=state]');
-    var no_candidates_present = $component.find('.votesmart-webform-candidate-wrapper').length < 1
+    var no_candidates_present = $component.find('.vs-webform-candidate-wrapper').length < 1
 
 
     //if the zip field has a value and we don't have any candidates
@@ -63,9 +63,9 @@ jQuery(function(){
 
 
 
-    $candidate_wrapper = $component.find('.votesmart-webform-candidate-wrapper');
+    $candidate_wrapper = $component.find('.vs-webform-candidate-wrapper');
     $form.bind('submit',function(){
-      $candidate_wrapper = $(this).find('.votesmart-webform-candidate-wrapper');
+      $candidate_wrapper = $(this).find('.vs-webform-candidate-wrapper');
 
       var has_candidate_checked = $candidate_wrapper.find('input:checked').length > 0;
       if( !has_candidate_checked )
@@ -74,15 +74,15 @@ jQuery(function(){
     });
 
     window.setTimeout(function(){
-     votesmart_webform_candidate_wrapper($candidate_wrapper)
+     vs_webform_candidate_wrapper($candidate_wrapper)
     },500);
 
 
     $component.bind('DOMNodeInserted',function(e){
       $new_content = $(e.target);
-      $candidate_wrapper = $new_content.find('.votesmart-webform-candidate-wrapper');
+      $candidate_wrapper = $new_content.find('.vs-webform-candidate-wrapper');
       window.setTimeout(function(){
-        votesmart_webform_candidate_wrapper($candidate_wrapper)
+        vs_webform_candidate_wrapper($candidate_wrapper)
       },500);
 
     })
