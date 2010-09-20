@@ -1,6 +1,6 @@
-//update candidate checkbox
 function vs_webform_update_candidate( $candidate, $selected_candidates )
 {
+  var $ = jQuery;
   var $t = $candidate;
 
   var selected_id = 'selected-'+ $t.attr('name').match(/\d+/)[0];
@@ -8,6 +8,7 @@ function vs_webform_update_candidate( $candidate, $selected_candidates )
 
   if( $t.filter(':checked').length == 1 )
   {
+    $('#vs-webform-no-cand-selected-error').remove();
     $selected_candidate = $('<span id="'+selected_id+'"><a href="#" title="uncheck '+label+'">'+ label +'</a>; </span>');
     $selected_candidate.click(function(){
       $candidate.attr('checked','');
@@ -24,23 +25,24 @@ function vs_webform_update_candidate( $candidate, $selected_candidates )
 
 function vs_webform_candidate_wrapper( $candidate_wrapper )
 {
-    if( $candidate_wrapper.length < 1 ) return;
-    $selected_candidates = $('<div class="vs-webform-selected-candidates" />');
-    $selected_candidates_wrapper = $('<div class="form-item">');
+  var $ = jQuery;
+  if( $candidate_wrapper.length < 1 ) return;
+  $selected_candidates = $('<div class="vs-webform-selected-candidates" />');
+  $selected_candidates_wrapper = $('<div class="form-item">');
 
-    $selected_candidates_wrapper.append('<label>Selected Officials:</label>');
-    $selected_candidates_wrapper.append($selected_candidates);
+  $selected_candidates_wrapper.append('<label>Selected Officials:</label>');
+  $selected_candidates_wrapper.append($selected_candidates);
 
-    $candidate_wrapper.after($selected_candidates_wrapper);
-    $('input[type=checkbox]').change(function(){
-      vs_webform_update_candidate($(this),$selected_candidates);
-    }).each(function(){
-      vs_webform_update_candidate($(this),$selected_candidates);
-    });
-
-
+  $candidate_wrapper.after($selected_candidates_wrapper);
+  $('input[type=checkbox]').change(function(){
+    vs_webform_update_candidate($(this),$selected_candidates);
+  }).each(function(){
+    vs_webform_update_candidate($(this),$selected_candidates);
+  });
 }
+
 jQuery(function(){
+  var $ = jQuery;
   $components = $('.webform-component-vs-webform');
 
   $components.each(function(){
@@ -66,10 +68,15 @@ jQuery(function(){
     $candidate_wrapper = $component.find('.vs-webform-candidate-wrapper');
     $form.bind('submit',function(){
       $candidate_wrapper = $(this).find('.vs-webform-candidate-wrapper');
-
+      if( $candidate_wrapper.length == 0 ) {
+        return TRUE;
+      }
       var has_candidate_checked = $candidate_wrapper.find('input:checked').length > 0;
-      if( !has_candidate_checked )
-        alert('Please select one or more officials.');
+      if ( !has_candidate_checked ) {
+        if ( $candidate_wrapper.prev('div.error').length == 0 ) {
+        $candidate_wrapper.before('<div id="vs-webform-no-cand-selected-error" class="messages error">Please select at least one official.</div>');
+        }
+      }
       return has_candidate_checked;
     });
 

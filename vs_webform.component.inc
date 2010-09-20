@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: vs_webform.component.inc,v 1.2.2.16 2010/06/07 21:30:55 troynt Exp $
 
 /**
  * @file
@@ -44,11 +44,12 @@ function _webform_defaults_vs_webform() {
 function _webform_edit_vs_webform($component) {
   include('vs_webform.defines.inc');
   
-  $form = array('extra' => array());
+  $form = array('extra' => array(
+  ));
   $form['extra']['state'] = array(
     '#type' => 'select',
     '#title' => t('Default State'),
-    '#description' => t('Pick a default state. This has no effect if a zip is specified'),
+    '#description' => t('Pick a default state. This field will be hidden if zip is shown or specified below'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['state'],
     '#element_validate' => array('_webform_edit_vs_webform_default_state_validate'),
@@ -63,13 +64,13 @@ function _webform_edit_vs_webform($component) {
   );
 
   $form['extra']['office_types'] = array(
-    '#type' => 'select',
+    '#type' => 'checkboxes',
     '#multiple' => TRUE,
     '#title' => t('Default Office(s)'),
     '#description' => t('Show only officials in these offices. Leave blank to show all offices.'),
     '#weight' => -1.2,
     '#default_value' => $component['extra']['office_types'],
-    '#options' => array_merge(array('' => ''), $VS_WEBFORM_OFFICE_TYPES)
+    '#options' => vs_webform_get_office_types()
   );
 
   $form['extra']['zip'] = array(
@@ -89,26 +90,6 @@ function _webform_edit_vs_webform($component) {
     '#weight'  => -1.05,
     '#default_value' => $component['extra']['hide_zip']
   );
-
-/*
-  //these are not valid anymore due to slow performance
-  //may use in future
-
-  $form['extra']['allow_candidates_without_email'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Allow candidates without email to be checked.'),
-    '#weight'  => 0,
-    '#default_value' => $component['extra']['allow_candidates_without_email']
-  );
-
-  $form['extra']['hide_no_email_warnings'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Hide no email warning descriptions.'),
-    '#weight'  => 0,
-    '#default_value' => $component['extra']['hide_no_email_warnings']
-  );
-*/
-
 
   $form['extra']['name_format'] = array(
     '#type' => 'textfield',
@@ -142,8 +123,9 @@ function _webform_edit_vs_webform_default_zip_validate($element, &$form_state) {
  */
 function _webform_edit_vs_webform_zip_validate($element, &$form_state) {
   $zip = $element['#value'];//alias
-  if ( empty($zip) )
-    form_error($element, t('zip can not be blank.', array('!value' => $zip)));
+  if ( empty($zip) ) {
+    return;
+  }
 
   if ( !vs_webform_is_zip($zip) ) {
     form_error($element, t('!value is not a valid zip code.', array('!value' => $zip)));
@@ -191,6 +173,10 @@ function _webform_edit_vs_webform_state_validate($element, &$form_state) {
  *   each value saved in this field.
  */
 function _webform_render_vs_webform($component, $value = NULL) {
+  if( arg(2) == 'submission' && arg(4) == 'edit' ) {
+    //don't allow admins to edit reps
+    return _webform_display_vs_webform($component, $value, 'html');
+  }
   include('vs_webform.defines.inc');
 
   if ( !empty($value) )
@@ -227,65 +213,89 @@ function _webform_render_vs_webform($component, $value = NULL) {
       $component['extra']['office_types'] = unserialize($component['extra']['office_types']);
   }
 
-  if ( !$component['extra']['hide_zip'] ) {
-    $form['vs_webform']['zip'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Zip'),
-      '#required' => TRUE,
-      '#size' => 10,
-      '#maxlength' => 10,
-      '#default_value' => $component['extra']['zip'],
-      '#description'   => t('Postal Code in format 12345 or 12345-1234'),
-      '#element_validate' => array('_webform_edit_vs_webform_zip_validate'),
-      '#ahah' => array(
-        'event' => 'change',
-        'wrapper' => $dom_id,
-        'path' => 'vs_webform/ahah/get_candidates',
-        'progress' => array('type' => 'throbber')
-      )
-    );
-  }
+  $form['vs_webform']['zip'] = array(
+    '#type' => $component['extra']['hide_zip'] ? 'hidden' : 'textfield',
+    '#title' => t('Zip'),
+    '#required' => !$component['extra']['hide_zip'],
+    '#size' => 10,
+    '#maxlength' => 10,
+    '#default_value' => $component['extra']['zip'],
+    '#description'   => t('Enter Postal Code in format 12345 or 12345-1234.'),
+    '#element_validate' => array('_webform_edit_vs_webform_zip_validate'),
+    '#ahah' => array(
+      'event' => 'change',
+      'wrapper' => $dom_id,
+      'path' => 'vs_webform/ahah/get_candidates',
+      'progress' => array('type' => 'throbber', 'message' => t('Getting candidates ...'))
+    )
+  );
 
-  if ( !$component['extra']['hide_state'] ) {
-    $form['vs_webform']['state'] = array(
-      '#type' => 'select',
-      '#title' => t('State'),
-      '#options' => array_merge(array('' => ''), $VS_WEBFORM_US_STATES),
-      '#multiple' => FALSE,
-      '#required' => TRUE,
-      '#default_value' => $component['extra']['state'],
-      '#element_validate' => array('_webform_edit_vs_webform_state_validate'),
-      '#ahah' => array(
-        'event' => 'change',
-        'wrapper' => $dom_id,
-        'path' => 'vs_webform/ahah/get_candidates',
-        'progress' => array('type' => 'throbber')
-      )
-    );
+  $form['vs_webform']['state'] = array(
+    '#type' => $component['extra']['hide_state'] ? 'hidden' : 'select',
+    '#title' => t('State'),
+    '#options' => array_merge(array('' => ''), $VS_WEBFORM_US_STATES),
+    '#multiple' => FALSE,
+    '#required' => !$component['extra']['hide_state'],
+    '#default_value' => $component['extra']['state'],
+    '#element_validate' => array('_webform_edit_vs_webform_state_validate'),
+    '#ahah' => array(
+      'event' => 'change',
+      'wrapper' => $dom_id,
+      'path' => 'vs_webform/ahah/get_candidates',
+      'progress' => array('type' => 'throbber')
+    )
+  );
+  
+  //Showing a zip field, hide the state
+  if( $form['vs_webform']['zip']['#type'] != 'hidden' ) {
+    $form['vs_webform']['state']['#type'] = 'hidden';
+    $form['vs_webform']['state']['#required'] = FALSE;
+    $form['vs_webform']['state']['#element_validate'] = array();
   }
-
+/*  
+  //default zip specified remove state field
+  if( !empty($component['extra']['zip']) ) {
+    unset($form['vs_webform']['state']);
+  }
+*/
   $form['vs_webform']['office_types'] = array(
     '#type' => 'hidden',
     '#value' => serialize($component['extra']['office_types'])
   );
 
-  $form['vs_webform']['jumper'] = array();//used to jump to various offices
-
   $zip = $component['extra']['zip']; //alias
   $state = $component['extra']['state']; //alias
-
   $office_types = array();
   if ( !empty($component['extra']['office_types']) ) {
     $office_types = $component['extra']['office_types'];
   }
+  $form['vs_webform']['jumper'] = array();//used to jump to various offices
+ 
+  $candidates = array();
 
-  $candidates = vs_webform_candidate_form_elements(array('state' => $state, 'zip' => $zip, 'officeTypes' => $office_types), $component, $form['vs_webform']['jumper']);
+  $fetch_candidates = TRUE;
+  if ( $form['vs_webform']['state']['#type'] == 'hidden' && empty($zip) ) {
+    $fetch_candidates = FALSE;
+  }
+  
+  if ( $fetch_candidates ) {
+    $candidates = vs_webform_candidate_form_elements(array('state' => $state, 'zip' => $zip, 'officeTypes' => $office_types), $component, $form['vs_webform']['jumper']);
+  }
 
   if ( !empty($candidates) ) {
-    $candidate_count = count($candidates);
+    $cls = 'vs-webform-candidate-wrapper';
+    if ( !empty($form['vs_webform']['jumper']) ) {
+      $cls .= ' vs-webform-candidate-wrapper-has-jumper';
+    }
+    $candidate_count = 0;
+    foreach( $candidates as $cand ) {
+      if( $cand['#type'] == 'checkbox' ) {
+        $candidate_count++;
+      }
+    }
     $form['vs_webform']['candidates_prefix'] = array(
       '#type' => 'markup',
-      '#value' => '<div class="vs-webform-candidate-wrapper"><span class="vs-webform-count">' . t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)) . '</span>'
+      '#value' => '<div class="' . $cls . '"><span class="vs-webform-count">' . t('Showing %candidate_count Officials', array('%candidate_count' => $candidate_count)) . '</span>'
     );
 
     $form['vs_webform']['candidates'] = $candidates;
@@ -333,9 +343,10 @@ function vs_webform_candidate_form_elements($args, $component, &$jumper_element 
   }
 
   asort($cand_names);
+  $office_types = vs_webform_get_office_types();
   foreach ($cand_names as $office => $cands ) {
     $anchor_name = 'vs-webform-office-type-' . strtolower($office);
-    $office_label = t($VS_WEBFORM_OFFICE_TYPES[$office]);
+    $office_label = t($office_types[$office]);
     if ( $needs_jumper )
       $jumper_element['#value'] .= '<li><a title="jump to ' . $office_label . '" href="#' . $anchor_name . '">' . $office_label . '</a></li>';
     $candidate_elements[] = array(
@@ -463,7 +474,7 @@ function _webform_display_vs_webform($component, $value, $format = 'html') {
     return $ret;//must return an array
   }
   else{
-    $o .= '<ul><li>' . implode('</li><li>', $cand_names) . '</li></ul>';
+    $o .= theme('item_list', $cand_names);
   }
 
   if ( $format == 'table-cell' ) {
@@ -511,24 +522,32 @@ function vs_webform_ahah_get_candidates() {
   $form_id = array_shift($args);
   $form['#post'] = $form_state['post'] = $_POST;
   $form['#redirect'] = $form['#programmed'] = FALSE;
-
-  drupal_process_form($form_id, $form, $form_state);
+  
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-
-  $output = theme('status_messages');
-
-  $form_portion = _vs_webform_element_children_search($form, 'vs_webform');
-  if ( $form_portion ) {
-    $output .= drupal_render($form_portion);
+  _vs_webform_validate($form, $form_state, TRUE);
+  $vs_webform = vs_webform_get_vs_webform_element($form);
+  $output = theme('status_messages');  
+  $errors = form_get_errors();
+  if( !empty($errors) ) {
+    unset(
+      $vs_webform['candidates_prefix'],
+      $vs_webform['candidates'],
+      $vs_webform['candidates_suffix'],
+      $vs_webform['jumper']
+    );
   }
   
+  if ( $vs_webform ) {
+    $output .= drupal_render($vs_webform);
+  }
+
   drupal_json(array('status' => TRUE, 'data' => $output));
 }
 
 function vs_webform_form_alter(&$form, $form_state, $form_id) {
   if ( preg_match('@webform_(.*)@', $form_id, $matches) ) {
-    if ( $vs_webform = _vs_webform_element_children_search($form, 'vs_webform') ) {
-      $form['#validate'][] = '_vs_webform_validate_candidates';
+    if ( $vs_webform = vs_webform_get_vs_webform_element($form) ) {
+      $form['#validate'][] = '_vs_webform_validate';
     }
   }
 }
@@ -562,36 +581,86 @@ function _vs_webform_array_key_search($arr, $key) {
   return FALSE;
 }
 
-function _vs_webform_validate_candidates($form, &$form_state, $first_run = TRUE) {
-  $vs_webform = _vs_webform_element_children_search($form, 'vs_webform');
-  if ( isset($vs_webform['vs_webform'] ) ) {
+function vs_webform_get_vs_webform_element( $form ) {
+  $vs_webform = &_vs_webform_element_children_search($form, 'vs_webform');
+  if( isset($vs_webform['vs_webform']) ) {
     $vs_webform = $vs_webform['vs_webform'];
   }
+  return $vs_webform;
+}
 
+function _vs_webform_validate($form, &$form_state, $allow_no_candidates_selected = FALSE) {
+  $vs_webform = vs_webform_get_vs_webform_element($form);
+
+  if ( !empty($vs_webform['zip']['#value']) && !vs_webform_is_zip($vs_webform['zip']['#value']) ) {
+    form_error($vs_webform['zip'], t('!value is not a valid zip code.', array('!value' => $vs_webform['zip']['#value'])));
+  }
+
+  if ( empty($vs_webform['zip']['#value']) && $vs_webform['zip']['#type'] != 'hidden' ) {
+    form_error($vs_webform['zip'], t('Please enter a zip code.'));
+  }
+
+  
   if ( ( isset($vs_webform['zip']) && form_get_error($vs_webform['zip']) )
       || ( isset($vs_webform['state']) && form_get_error($vs_webform['state']) )
   ) {
     return; // wait until we have a valid zip or state
   }
+
+  $allowed_candidates = vs_webform_get_candidates(array(
+    'state' => $vs_webform['state']['#value'],
+    'zip' => $vs_webform['zip']['#value']
+  ));
   
-  if ( empty($vs_webform['candidates']) ) {
-    form_set_error('vs_webform', t('Please select one or more officials.'));
+  if ( empty($allowed_candidates) ) {
+    form_set_error('vs_webform',t('Unable to find officials with information provided.'));
+    return;
+  }
+  
+  $candidates = element_children($vs_webform['candidates']);//alias
+  if( !$allow_no_candidates_selected ) {
+    if ( empty($vs_webform['candidates']) ) {
+      form_set_error('vs_webform', t('Please select one or more officials.'));
+      return;
+    }
+  
+    if ( !is_array($candidates) ) {
+      form_set_error('vs_webform', t('Please select one or more officials.'));
+      return;
+    }
   }
 
-  $candidates = element_children($vs_webform['candidates']);//alias
-
-  $error = TRUE;
-  if ( is_array($candidates) ) {
-    foreach ( $candidates as $cand_id ) {
-      if ( $vs_webform['candidates'][$cand_id]['#value'] == 1 ) {
-        $error = FALSE;
-        break;
-      }
-    }//foreach
-  }//if is_array
+  /**
+   * Both zip and state supplied. Zip was used to look up candidates,
+   * check to see if an official found in the zip is also present in state,
+   * to prove that the zip is within that state.
+   */
+  if ( !empty($vs_webform['zip']['#value']) && !empty($vs_webform['state']['#value']) ) {
+    $allowed_cands_from_state = vs_webform_get_candidates(array(
+        'state' => $vs_webform['state']['#value'],
+    ));
+    $first_cand_id_from_zip = current(array_keys($allowed_candidates));
+    if ( !isset($allowed_cands_from_state[$first_cand_id_from_zip]) ) {
+      form_set_error('vs_webform', t('Zip not found in !state.',array('!state' => $vs_webform['state']['#value'])));
+    }
+  }
   
-  if ( $error )
+  $has_one_candidate_selected = FALSE;
+  if ( !empty($candidates) ) {
+    foreach ( $candidates as $cand_id ) {
+      if ( !isset($allowed_candidates[$cand_id]) ) {
+        $vs_webform['candidates'][$cand_id]['#value'] = 0;
+      }
+      
+      if ( !$has_one_candidate_selected && $vs_webform['candidates'][$cand_id]['#value'] == 1 ) {
+        $has_one_candidate_selected = TRUE;
+      }
+    }
+  }
+
+  if ( !$allow_no_candidates_selected && !$has_one_candidate_selected ) {
     form_set_error('vs_webform', t('Please select one or more officials.'));
+  }
 }
 
 /**

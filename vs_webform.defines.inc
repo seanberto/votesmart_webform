@@ -1,35 +1,10 @@
 <?php
-// $Id$
+// $Id: vs_webform.defines.inc,v 1.2.2.2 2010/04/28 04:29:49 loubabe Exp $
 
 /**
  * @file
  * Variables used throughout the module
  */
-/*
-$VS_WEBFORM_OFFICE_TYPES = array(
-  'P' => array('name'=> 'Presidential and Cabinet', 'level' => 'F', 'branch' => 'E'),
-  'C' => array('name'=> 'Congressional',            'level' => 'F', 'branch' => 'L'),
-  'J' => array('name'=> 'Supreme Court',            'level' => 'F', 'branch' => 'J'),
-  'G' => array('name'=> 'Governor and Cabinet',     'level' => 'S', 'branch' => 'E'),
-  'K' => array('name'=> 'State Judicial',           'level' => 'S', 'branch' => 'J'),
-  'L' => array('name'=> 'State Legislature',        'level' => 'S', 'branch' => 'L'),
-  'S' => array('name'=> 'State Wide',               'level' => 'L', 'branch' => 'E'),
-  'H' => array('name'=> 'Local Judicial',           'level' => 'L', 'branch' => 'J'),
-  'N' => array('name'=> 'Local Legislative',        'level' => 'L', 'branch' => 'L'),
-  'M' => array('name'=> 'Local Executive',          'level' => 'L', 'branch' => 'E'),
-);*/
-$VS_WEBFORM_OFFICE_TYPES = array(
-  'P' => 'Presidential and Cabinet', //'level' => 'F', 'branch' => 'E'),
-  'C' => 'Congressional',            //'level' => 'F', 'branch' => 'L'),
-  'J' => 'Supreme Court',            //'level' => 'F', 'branch' => 'J'),
-  'G' => 'Governor and Cabinet',     //'level' => 'S', 'branch' => 'E'),
-  'K' => 'State Judicial',           //'level' => 'S', 'branch' => 'J'),
-  'L' => 'State Legislature',        //'level' => 'S', 'branch' => 'L'),
-  'S' => 'State Wide',               //'level' => 'L', 'branch' => 'E'),
-  'H' => 'Local Judicial',           //'level' => 'L', 'branch' => 'J'),
-  'N' => 'Local Legislative',        //'level' => 'L', 'branch' => 'L'),
-  'M' => 'Local Executive',          //'level' => 'L', 'branch' => 'E'),
-);
 
 $VS_WEBFORM_OFFICE_BRANCHES = array('E' => 'Executive', 'L' => 'Legislative', 'J' => 'Judicial');
 $VS_WEBFORM_OFFICE_LEVELS = array('F' => 'Federal', 'S' => 'State', 'L' => 'Local');
